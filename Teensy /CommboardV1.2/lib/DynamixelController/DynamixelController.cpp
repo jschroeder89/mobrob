@@ -74,7 +74,39 @@ void scanPort() {
         }
         scanMode=false;
     }
-    Serial.println("DONE!");
+}
+
+
+void initializeServos() {
+    uint8_t setReturnDelayTime_1[8] = {255, 255, 1, 4, 3, 5, 1, 241};
+    uint8_t setReturnDelayTime_2[8] = {255, 255, 2, 4, 3, 5, 1, 240};
+    uint8_t setTorqueEnable_1[8] = {255, 255, 1, 4, 3, 24, 1, 222};
+    uint8_t setTorqueEnable_2[8] = {255, 255, 2, 4, 3, 24, 1, 221};
+    uint8_t setTorqueLimit_1[9] = {255, 255, 1, 5, 3, 34, 32, 3, 177};
+    uint8_t setTorqueLimit_2[9] = {255, 255, 2, 5, 3, 34, 32, 3, 176};
+    uint8_t setCcwAngleLimit_1[9] = {255, 255, 1, 5, 3, 8, 0, 0, 238};
+    uint8_t setCcwAngleLimit_2[9] = {255, 255, 2, 5, 3, 8, 0, 0, 237};
+    uint8_t setCwAngleLimit_1[9] = {255, 255, 1, 5, 3, 6, 0, 0, 240};
+    uint8_t setCwAngleLimit_2[9] = {255, 255, 2, 5, 3, 6, 0, 0, 239};
+    uint8_t setCcwCompMargin_1[9] = {255, 255, 1, 5, 3, 28, 0, 0, 218};
+    uint8_t setCcwCompMargin_2[9] = {255, 255, 2, 5, 3, 28, 0, 0, 217};
+    uint8_t setCwCompMargin_1[9] = {255, 255, 1, 5, 3, 26, 0, 0, 220};
+    uint8_t setCwCompMargin_2[9] = {255, 255, 2, 5, 3, 26, 0, 0, 219};
+
+    writeToUART(&setReturnDelayTime_1[0]);
+    writeToUART(&setReturnDelayTime_2[0]);
+    writeToUART(&setTorqueEnable_1[0]);
+    writeToUART(&setTorqueEnable_2[0]);
+    writeToUART(&setTorqueLimit_1[0]);
+    writeToUART(&setTorqueLimit_2[0]);
+    writeToUART(&setCcwAngleLimit_1[0]);
+    writeToUART(&setCcwAngleLimit_2[0]);
+    writeToUART(&setCwAngleLimit_1[0]);
+    writeToUART(&setCwAngleLimit_2[0]);
+    writeToUART(&setCcwCompMargin_1[0]);
+    writeToUART(&setCcwCompMargin_2[0]);
+    writeToUART(&setCwCompMargin_1[0]);
+    writeToUART(&setCwCompMargin_2[0]);
 }
 
 void init() {
@@ -148,9 +180,9 @@ void readFromUSB() {
     parseJsonString(s);
 }
 
+
 void writeToUART(uint8_t* servoPckt) {
     DynamixelMessage* USBMessage = new DynamixelMessage(servoPckt);
-
     if (idMap[servoPckt[2]] == 1 || scanMode) {
         pushToQueue1(USBMessage);
     }
@@ -228,7 +260,7 @@ void servoReadPcktConstructor() {
     Serial.print("ServoPacket for ID: ");
     Serial.println(id);
     for (size_t i = 0; i < sizeof servoPckt; i++) {
-        Serial.print(servoPckt[i] );
+        Serial.print(servoPckt[i]);
         Serial.print(" ");
     }
     Serial.println("");

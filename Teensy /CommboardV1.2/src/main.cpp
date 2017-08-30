@@ -7,6 +7,7 @@ void setup() {
     init();
     I2C i2c;
     i2c.initializeI2C();
+    initializeServos();
     digitalWrite(13, LOW);
 }
 

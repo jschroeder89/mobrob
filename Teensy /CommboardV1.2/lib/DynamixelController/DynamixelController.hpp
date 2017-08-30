@@ -54,12 +54,14 @@ void pushToQueue2(DynamixelMessage* messageToPush);
 void pushToQueue3(DynamixelMessage* messageToPush);
 void init();
 
+void initializeServos();
+
 void writeToUSB(JsonObject& root);
 void convertServoDataToJson(int* dataArray);
 void parseJsonString(String s);
 void servoWritePcktConstructor(Vector<int>* velArray);
 void servoReadPcktConstructor(int* servoPckt);
-void writeToUART();
+void writeToUART(uint8_t* servoPckt);
 void convertToReadableVelocities(Vector<int>* servoPckt);
 void readStatusPckt(uint8_t* rcvdPkt);
 void readFromUSB();

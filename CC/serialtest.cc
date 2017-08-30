@@ -132,7 +132,7 @@ std::vector<int> jsonServoParser(std::string json) {
 }
 
 void writeToUSB(int fd, JsonObject& root, int bufferSize) {
-    char buffer[bufferSize];
+    char buffer[bufferSize+1];
     root.printTo(buffer, sizeof buffer);
     int n = write(fd, &buffer, sizeof buffer);
     if (n > 0) {
