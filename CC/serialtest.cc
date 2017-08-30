@@ -101,18 +101,18 @@ std::string readFromUSB(int fd) {
 std::vector<std::vector<int> > jsonSensorParser(std::string json) {
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    std::vector<int> F, L, R, B;
+    std::vector<int> FL, FR, L, R, B;
     std::vector<std::vector<int> > sensorData;
 
-    for (size_t i = 0; i < 16; i++) {
-        F.push_back(root["F"][i]);
-    }
     for (size_t i = 0; i < 8; i++) {
+        FL.push_back(root["FL"][i]);
+        FR.push_back(root["FR"][i]);
         L.push_back(root["L"][i]);
         B.push_back(root["B"][i]);
         R.push_back(root["R"][i]);
     }
-    sensorData.push_back(F);
+    sensorData.push_back(FL);
+    sensorData.push_back(FR);
     sensorData.push_back(L);
     sensorData.push_back(B);
     sensorData.push_back(R);
@@ -158,10 +158,25 @@ void convertVelocitiesToJson(int fd, int velLeft, int velRight) {
     writeToUSB(fd, root, bufferSize);
 }
 
+void requestSensorData(int fd) {
+    requestHandler(fd, sensorRead);
+    jsonSensorParser(readFromUSB(fd));
+}
+
+void requestServoData(int fd) {
+    requestHandler(fd, servoRead);
+    jsonServoParser(readFromUSB(fd));
+
+}
+
+void setServoVelocities(int fd, int velLeft, int velRight) {
+    requestHandler(fd, servoWrite);
+    setVelocities(fd, velLeft, velRight);
+}
+
 int main(int argc, char *argv[]) {
     int fd = 0;
     fd = openPort("/dev/ttyACM0");
-    requestHandler(fd, servoWrite);
-    setVelocities(fd, 50, 60);
+    setServoVelocities(fd, 200, 80);
     return 0;
 }

@@ -2,6 +2,7 @@
 
 uint8_t rcvdPktUsb[MAX_LENGTH_OF_MESSAGE];
 uint8_t posInArrayUsb;
+//boolean newData = false;
 
 volatile uint16_t posInArray1 = 0;
 volatile uint16_t posInArray2 = 0;
@@ -145,7 +146,7 @@ void readFromUSB() {
     char  c;
     char buf[bufLen];
     String s;
-
+    delay(10);
     while (Serial.available() > 0 && newData == false) {
         c = Serial.read();
         if (inProgress == true) {
@@ -161,8 +162,6 @@ void readFromUSB() {
                 idx = 0;
                 newData = true;
                 inProgress = false;
-                /*s = buf;
-                jsonParser(s);*/
             }
         }
         else if (c == '{') {
@@ -172,11 +171,9 @@ void readFromUSB() {
         }
 
     }
-    //delay(300);
     newData = false;
     s = buf;
     s.append('}');
-    //Serial.println(s);
     parseJsonString(s);
 }
 
@@ -248,7 +245,7 @@ void convertToReadableVelocities(Vector<int>* servoPckt) {
 void servoReadPcktConstructor() {
     uint8_t servoPckt[8] {FF, FF, 0, _READ_LENGHT, _READ_SERVO_DATA,
         SERVO_REGISTER_PRESENT_SPEED, _NUM_OF_BYTES_TO_READ, 0};
-    for (uint8_t id = 1; id <=2; id++) {
+    for (uint8_t id = 1; id <3; id++) {
         uint8_t checkSum = 0;
         servoPckt[2] = id;
         for (size_t i = 2; i < sizeof servoPckt-1; i++) {
@@ -273,7 +270,7 @@ void servoWritePcktConstructor(Vector<int>* velArray) {
     Serial.println(velArray->at(1));
     uint8_t servoPckt[9] {FF, FF, 0, _WRITE_LENGHT, _WRITE_SERVO_DATA,
         SERVO_REGISTER_MOVING_SPEED, 0, 0, 0};
-    for (uint8_t id = 1; id <= 2; id++) {
+    for (uint8_t id = 1; id < 3; id++) {
         int val = 0;
         uint8_t checkSum = 0;
         servoPckt[2] = id;
