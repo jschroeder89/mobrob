@@ -52,7 +52,7 @@ void send3();
 void pushToQueue1(DynamixelMessage* messageToPush);
 void pushToQueue2(DynamixelMessage* messageToPush);
 void pushToQueue3(DynamixelMessage* messageToPush);
-void init();
+void initializeUART();
 
 void initializeServos();
 

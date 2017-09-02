@@ -110,7 +110,7 @@ void initializeServos() {
     writeToUART(&setCwCompMargin_2[0]);
 }
 
-void init() {
+void initializeUART() {
     Uart1Event event1;//initialize UART A of the Teensy for enhanced features like DMA capability
     Uart2Event event2;//initialize UART B ""
     Uart3Event event3;//initialize UART C ""

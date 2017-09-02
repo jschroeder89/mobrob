@@ -1,0 +1,14 @@
+{
+  "name": "gui",
+  "version": "1.0.0",
+  "description": "mobrob_gui",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Johann Schröder",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^1.7.5"
+  }
+}

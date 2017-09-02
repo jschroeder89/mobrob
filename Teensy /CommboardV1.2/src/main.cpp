@@ -4,10 +4,10 @@ void setup() {
     pinMode(13, OUTPUT);
     digitalWrite(13, HIGH);
     Serial.begin(9600);
-    init();
+    initializeUART();
+    initializeServos();
     I2C i2c;
     i2c.initializeI2C();
-    initializeServos();
     digitalWrite(13, LOW);
 }
 
