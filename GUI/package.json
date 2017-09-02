@@ -9,6 +9,7 @@
   "author": "Johann Schröder",
   "license": "ISC",
   "dependencies": {
-    "electron": "^1.7.5"
+    "electron": "^1.7.5",
+    "zeromq": "^4.5.0"
   }
 }
