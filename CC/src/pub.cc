@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     publisher.bind("tcp://*:3000");
 
     while (1) {
-        publisher.send(buf, sizeof buf);
+        publisher.send(buf, bufferSize);
         std::cout << root << std::endl << bufferSize << std::endl;
         boost::this_thread::sleep_for( boost::chrono::milliseconds(500) );
     }
