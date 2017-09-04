@@ -8,6 +8,10 @@ int main(int argc, char *argv[]) {
     int bufferSize;
     char buf[bufferSize];
 
+    zmq::context_t context (1);
+    zmq::socket_t publisher(context, ZMQ_PUB);
+    publisher.bind("tcp://*:3000");
+
     DynamicJsonBuffer jsonBuffer;
     //StaticJsonBuffer<512> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
@@ -18,9 +22,6 @@ int main(int argc, char *argv[]) {
     bufferSize = root.measureLength();
     root.printTo(buf, sizeof buf);
 
-    zmq::context_t context (1);
-    zmq::socket_t publisher(context, ZMQ_PUB);
-    publisher.bind("tcp://*:3000");
 
     while (1) {
         publisher.send(buf, bufferSize);
