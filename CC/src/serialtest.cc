@@ -26,7 +26,7 @@ void requestHandler(int fd, int op);
 void convertVelocitiesToJson(int fd, int velLeft, int velRight);
 void writeToUSB(int fd, JsonObject& root);
 void setVelocities(int fd, int velLeft, int velRight);
-void jsonSensorParser(std::string json);
+void jsonSensorParser(char* json);
 void testFunction(std::vector<std::vector <int> > sensorData);
 //using json = nlohmann::json;
 
@@ -73,7 +73,6 @@ void requestHandler(int fd, int op) {
 }
 
 int readFromUSB(int fd) {
-    std::string s;
     char buf[bufLen];
     int n = 0, nbytes = 0;
     /*n = read(fd, buf+nbytes, bufLen-nbytes);
@@ -84,13 +83,10 @@ int readFromUSB(int fd) {
         n = read(fd, buf+nbytes, bufLen-nbytes);
         nbytes +=n;
         if (buf[nbytes-1] == '}') {
-            buf[nbytes] = '\0';
-            s = buf;
             break;
         }
     } while(buf[nbytes] == '}');
-        jsonSensorParser(s);
-        std::cout << s.length() << std::endl;
+        jsonSensorParser(&buf[0]);
 
 
         /*do {
@@ -121,18 +117,18 @@ int readFromUSB(int fd) {
                 break;
             }
         } while(nbytes <= bufLen);*/
-    //return s;
+    return 0;
 }
 
 void testFunction(std::vector<std::vector <int> > sensorData) {
     std::cout << sensorData.size() << std::endl;
 }
 
-void jsonSensorParser(std::string json) {
+void jsonSensorParser(char* json) {
 
     std::cout << json << std::endl;
     //DynamicJsonBuffer jsonBuffer;
-    StaticJsonBuffer<70> jsonBuffer;
+    StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     if (!root.success()) {
         std::cout << "NOPE" << std::endl;
