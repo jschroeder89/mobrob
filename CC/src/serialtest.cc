@@ -7,6 +7,7 @@
 #include <cstring>
 #include <vector>
 #include <ArduinoJson.h>
+//#include <json.hpp>
 
 //Defines
 #define sensorRead 1
@@ -15,18 +16,19 @@
 #define servoReadByte '2'
 #define servoWrite 3
 #define servoWriteByte '3'
-#define bufLen 128
-#define jsonBufLen 128
+#define bufLen 256
+#define jsonBufLen 256
 
 //Prototypes
 int openPort(char const *port);
-std::string readFromUSB(int fd);
+int readFromUSB(int fd);
 void requestHandler(int fd, int op);
 void convertVelocitiesToJson(int fd, int velLeft, int velRight);
 void writeToUSB(int fd, JsonObject& root);
 void setVelocities(int fd, int velLeft, int velRight);
 void jsonSensorParser(std::string json);
 void testFunction(std::vector<std::vector <int> > sensorData);
+//using json = nlohmann::json;
 
 int openPort(char const *port) {
     int fd = open(port, O_RDWR | O_NDELAY);
@@ -63,53 +65,83 @@ void requestHandler(int fd, int op) {
                 break;
     }
     int n = write(fd, &byte, sizeof byte);
-    std::cout << "Written " << n << " Byte(s)" << std::endl;
-    std::cout << byte << std::endl;
+    //std::cout << "Written " << n << " Byte(s)" << std::endl;
+    //std::cout << byte << std::endl;
     if (n <= 0) {
         std::cout << "No bytes writen!" << std::endl;
     }
 }
 
-std::string readFromUSB(int fd) {
+int readFromUSB(int fd) {
     std::string s;
     char buf[bufLen];
     int n = 0, nbytes = 0;
+    /*n = read(fd, buf+nbytes, bufLen-nbytes);
+    for (size_t i = 0; i < sizeof buf; i++) {
+        std::cout << buf[i] << std::endl;
+    }*/
+    do {
+        n = read(fd, buf+nbytes, bufLen-nbytes);
+        nbytes +=n;
+        if (buf[nbytes-1] == '}') {
+            buf[nbytes] = '\0';
+            s = buf;
+            break;
+        }
+    } while(buf[nbytes] == '}');
+        jsonSensorParser(s);
+        std::cout << s.length() << std::endl;
 
-        do {
-            n = read(fd, buf+nbytes, bufLen-nbytes);
 
+        /*do {
+            n = read(fd, buf, 1);
+
+            std::cout << nbytes << std::endl;
             if ((n == -1) && (errno == EINTR)) {
+                std::cout << "Case 1" << std::endl;
                 continue;
             }
             if ((n == 0) && (nbytes == 0)) {
+                std::cout << "Case 2" << std::endl;
                 continue;
             }
             if (nbytes == 0) {
+                std::cout << "Case 3" << std::endl;
+                continue;
             }
             if (n == -1) {
-                return "";
+                std::cout << "Case 4" << std::endl;
+                return -1;
             }
             nbytes += n;
             if (buf[nbytes-1] == '}') {
+                std::cout << buf[nbytes] << std::endl;
                 buf[nbytes] = '\0';
                 s = buf;
                 break;
             }
-        } while(nbytes <= bufLen);
-    return s;
+        } while(nbytes <= bufLen);*/
+    //return s;
 }
 
 void testFunction(std::vector<std::vector <int> > sensorData) {
-    std::cout << sensorData[0].size() << std::endl;
+    std::cout << sensorData.size() << std::endl;
 }
 
 void jsonSensorParser(std::string json) {
-    StaticJsonBuffer<jsonBufLen> jsonBuffer;
+
+    std::cout << json << std::endl;
+    //DynamicJsonBuffer jsonBuffer;
+    StaticJsonBuffer<70> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
+    if (!root.success()) {
+        std::cout << "NOPE" << std::endl;
+    }
+
     std::vector<int> FL, FR, L, R, B;
     std::vector<std::vector<int> > sensorData;
 
-    for (size_t i = 0; i < 8; i++) {
+    /*for (size_t i = 0; i < 8; i++) {
         FL.push_back(root["FL"][i]);
         FR.push_back(root["FR"][i]);
         L.push_back(root["L"][i]);
@@ -121,8 +153,7 @@ void jsonSensorParser(std::string json) {
     sensorData.push_back(L);
     sensorData.push_back(B);
     sensorData.push_back(R);
-
-    testFunction(sensorData);
+*/
 }
 
 std::vector<int> jsonServoParser(std::string json) {
@@ -165,13 +196,14 @@ void convertVelocitiesToJson(int fd, int velLeft, int velRight) {
 
 void requestSensorData(int fd) {
     requestHandler(fd, sensorRead);
-    jsonSensorParser(readFromUSB(fd));
+    //jsonSensorParser(readFromUSB(fd));
+    readFromUSB(fd);
 }
 
 void requestServoData(int fd) {
     requestHandler(fd, servoRead);
-    jsonServoParser(readFromUSB(fd));
-
+    //jsonServoParser(readFromUSB(fd));
+    readFromUSB(fd);
 }
 
 void setServoVelocities(int fd, int velLeft, int velRight) {
