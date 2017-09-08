@@ -18,8 +18,8 @@
 #define servoReadByte '2'
 #define servoWrite 3
 #define servoWriteByte '3'
-#define bufLen 256
-#define jsonBufLen 256
+#define bufLen 1024
+#define jsonBufLen 1024
 
 //Prototypes
 int openPort(char const *port);
@@ -28,7 +28,7 @@ void requestHandler(int fd, int op);
 void convertVelocitiesToJson(int fd, int velLeft, int velRight);
 void writeToUSB(int fd, JsonObject& root);
 void setVelocities(int fd, int velLeft, int velRight);
-void jsonSensorParser(char* json);
-void jsonServoParser(char* json);
+void jsonSensorParser(std::string json);
+void jsonServoParser(std::string json);
 
 #endif

@@ -1,8 +1,8 @@
 #include "mobrobSensor.hpp"
 
 void I2C::initializeI2C() {
-    Serial.println(F_BUS/20);
-    Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_400);
+    //Serial.println(F_BUS/20);
+    Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_1800);
     //Serial.println("I2C Initialization complete!");
 }
 
@@ -25,13 +25,13 @@ int I2C::getI2CSensorData(int add, int ch) {
     if (status == 0)
     {
     Wire.requestFrom(address[add], 2, I2C_STOP);
-    while (Wire.available()) {
-      int byte1 = Wire.readByte();
-      int byte2 = Wire.readByte();
-      int number = byte2 | byte1 << 8;
-      number /= 16;
-      return number;
-    }
+        while (Wire.available()) {
+          int byte1 = Wire.readByte();
+          int byte2 = Wire.readByte();
+          int number = byte2 | byte1 << 8;
+          number /= 16;
+          return number;
+        }
     }
     return -1;
 }

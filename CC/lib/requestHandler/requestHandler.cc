@@ -44,33 +44,41 @@ void requestHandler(int fd, int op) {
 
 int readFromUSB(int fd, int op) {
     char buf[bufLen];
-    int n = 0, nbytes = 0;
+    int n = 0, nbytes = 0, i = 0;
+    std::string json;
+
+
 
     do {
         n = read(fd, buf+nbytes, bufLen-nbytes);
-        nbytes +=n;
+
         if (buf[nbytes-1] == '}') {
+            buf[nbytes] == '\0';
+            json = buf;
             break;
         }
-    } while(buf[nbytes] == '}');
-
+        nbytes +=n;
+    } while(nbytes <= bufLen);
+    size_t jsonStartPos = json.find('{');
+    json = json.erase(0, jsonStartPos);
+    size_t jsonEndPos = json.find('}');
+    json = json.erase(jsonEndPos+1, json.length());
+    std::cout << json[json.length()-1] << std::endl << json << std::endl;
     if (op == sensorRead) {
-        jsonSensorParser(&buf[0]);
+        jsonSensorParser(json);
     } else if (op == servoRead) {
-        jsonServoParser(&buf[0]);
+        jsonServoParser(json);
     }
     return 0;
 }
 
-void jsonSensorParser(char* json) {
+void jsonSensorParser(std::string json) {
 
-    std::cout << json << std::endl;
     //DynamicJsonBuffer jsonBuffer;
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    if (!root.success()) {
-        std::cout << "NOPE" << std::endl;
-    }
+    std::cout << root["FL"][0] << std::endl;
+
 
     std::vector<int> FL, FR, L, R, B;
     std::vector<std::vector<int> > sensorData;
@@ -90,7 +98,7 @@ void jsonSensorParser(char* json) {
 */
 }
 
-void jsonServoParser(char* json) {
+void jsonServoParser(std::string json) {
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
 
@@ -129,17 +137,25 @@ void convertVelocitiesToJson(int fd, int velLeft, int velRight) {
 
 void requestSensorData(int fd) {
     requestHandler(fd, sensorRead);
-    //jsonSensorParser(readFromUSB(fd));
-    readFromUSB(fd);
+    readFromUSB(fd, sensorRead);
 }
 
 void requestServoData(int fd) {
     requestHandler(fd, servoRead);
-    //jsonServoParser(readFromUSB(fd));
-    readFromUSB(fd);
+    readFromUSB(fd, servoRead);
 }
 
 void setServoVelocities(int fd, int velLeft, int velRight) {
     requestHandler(fd, servoWrite);
     setVelocities(fd, velLeft, velRight);
+}
+
+int main(int argc, char *argv[]) {
+    int fd = 0;
+    fd = openPort("/dev/ttyACM0");
+    requestSensorData(fd);
+    //requestServoData(fd);
+    //setServoVelocities(fd, 200, 80);
+
+    return 0;
 }

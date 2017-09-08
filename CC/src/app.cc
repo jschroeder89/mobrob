@@ -1,7 +1,8 @@
 //#include <requestHandler.hpp>
 #include <zmq.hpp>
 
-#define mainLoop true
+
+
 
 int main(int argc, char *argv[]) {
     int fd = 0;
@@ -9,7 +10,7 @@ int main(int argc, char *argv[]) {
     zmq::socket_t publisher(context, ZMQ_PUB);
     publisher.bind("tcp://*:3000");
     //fd = openPort("/dev/ttyACM0");
-    while (mainLoop) {
+    while (true) {
         /* code */
     }
     //requestSensorData(fd);

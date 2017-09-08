@@ -1,14 +1,29 @@
-var nonCollisionColor = "#00FF50"
-var maxCollisionColor = "#FF0050"
-var nonCollisionColorValue = 65360
-var fillColor
-var testValue = 2983
-var dezVal = testValue + nonCollisionColorValue
-var hexStr = parseInt(testValue + nonCollisionColorValue, 16)
-console.log(dezVal, hexStr);
+var nonCollisionColor = "#00FF00"
+var maxCollisionColor = "#FF0000"
+
+function valueToHexStringColor(val) {
+    val = Math.round(val / 16);
+    valRev = 255 - val;
+    val = val.toString(16);
+        if (val.length == 1) {
+            val = val + "0";
+        }
+    valRev = valRev.toString(16);
+        if (valRev.length == 1) {
+            valRev = valRev + "0";
+        }
+    colorHexString = "#" + val + valRev + "0F";
+    return colorHexString;
+}
+
+var fillColor = valueToHexStringColor(1000);
+
+//var dezVal = testValue + nonCollisionColorValue
+//var hexStr = parseInt(testValue + nonCollisionColorValue, 16)
+//console.log(dezVal, hexStr);
 var sensorfieldStr = "sensorfield_"
-var sensorArray = []
+var sensorArray = [];
 for (var i = 0; i < 40; i++) {
     sensorArray.push(sensorfieldStr.concat(String(i)));
-    document.getElementById(sensorArray[i]).style.fill = "#426819";
+    document.getElementById(sensorArray[i]).style.fill = fillColor;
 }
