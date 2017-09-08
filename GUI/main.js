@@ -2,9 +2,9 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 var sensorGUI = null,
+    pathGUI = null,
     sensorGUI_x_Pos = 0,
     sensorGUI_y_Pos = 0,
-    pathGUI = null,
     pathGUI_x_Pos = 800,
     pathGUI_y_Pos = 0;
 app.on('ready', function(){
@@ -13,7 +13,7 @@ app.on('ready', function(){
         height: 1024
     });
     sensorGUI.setPosition(sensorGUI_x_Pos, sensorGUI_y_Pos);
-    //sensorGUI.webContents.openDevTools();
+    sensorGUI.webContents.openDevTools();
     sensorGUI.loadURL(`file://${__dirname}/app/sensorGUI.html`);
 })
 
