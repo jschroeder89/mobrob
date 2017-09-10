@@ -1,8 +1,28 @@
 #include "DynamixelController.hpp"
 
 uint8_t rcvdPktUsb[MAX_LENGTH_OF_MESSAGE];
-uint8_t posInArrayUsb;
+uint8_t posInArrayUsb = 0;
 //boolean newData = false;
+
+Uart1Event event1;
+IntervalTimer txTimer1;
+Uart2Event event2;
+IntervalTimer txTimer2;
+Uart3Event event3;
+IntervalTimer txTimer3;
+volatile uint8_t rcvdPkt1[MAX_LENGTH_OF_MESSAGE];
+
+volatile uint8_t rcvdPkt2[MAX_LENGTH_OF_MESSAGE];
+
+volatile uint8_t rcvdPkt3[MAX_LENGTH_OF_MESSAGE];
+
+
+QueueArray <DynamixelMessage*> queue1(50);
+
+QueueArray <DynamixelMessage*> queue2(50);
+
+QueueArray <DynamixelMessage*> queue3(50);
+
 
 volatile uint16_t posInArray1 = 0;
 volatile uint16_t posInArray2 = 0;
@@ -32,6 +52,8 @@ volatile uint8_t idMap[256];
 volatile bool usbMode=false;
 volatile bool scanMode=false;
 
+void testFunc(uint8_t* servoPckt);
+
 void scanPort() {
     scanMode = true;
 
@@ -44,7 +66,7 @@ void scanPort() {
         search[i]=0;
     }
 
-    for(int k=0;k<6;k++){
+    for(int k=0;k<8;k++){
         for (int j=32*k;j<32*(k+1);j++){
             search[0]=255;
             search[1]=255;
@@ -57,9 +79,6 @@ void scanPort() {
             DynamixelMessage* ScanMessage2 = new DynamixelMessage(search); //
             DynamixelMessage* ScanMessage3 = new DynamixelMessage(search); //
 
-            QueueArray <DynamixelMessage*> queue1(50);
-            QueueArray <DynamixelMessage*> queue2(50);
-            QueueArray <DynamixelMessage*> queue3(50);
 
             queue1.push(ScanMessage1);                                                   //messages are being pushed
             queue2.push(ScanMessage2);                                                   //into their corresponding queues
@@ -89,31 +108,33 @@ void initializeServos() {
     uint8_t setCcwAngleLimit_2[9] = {255, 255, 2, 5, 3, 8, 0, 0, 237};
     uint8_t setCwAngleLimit_1[9] = {255, 255, 1, 5, 3, 6, 0, 0, 240};
     uint8_t setCwAngleLimit_2[9] = {255, 255, 2, 5, 3, 6, 0, 0, 239};
-    uint8_t setCcwCompMargin_1[9] = {255, 255, 1, 5, 3, 28, 0, 0, 218};
-    uint8_t setCcwCompMargin_2[9] = {255, 255, 2, 5, 3, 28, 0, 0, 217};
-    uint8_t setCwCompMargin_1[9] = {255, 255, 1, 5, 3, 26, 0, 0, 220};
-    uint8_t setCwCompMargin_2[9] = {255, 255, 2, 5, 3, 26, 0, 0, 219};
+    uint8_t setLED[8] = {255, 255, 2, 4, 3, 25, 0, 219};    //for debug purposes
+    //uint8_t setLED_2[8] = {255, 255, 2, 4, 3, 25, 0, 219};
 
-    writeToUART(&setReturnDelayTime_1[0]);
-    writeToUART(&setReturnDelayTime_2[0]);
-    writeToUART(&setTorqueEnable_1[0]);
-    writeToUART(&setTorqueEnable_2[0]);
-    writeToUART(&setTorqueLimit_1[0]);
-    writeToUART(&setTorqueLimit_2[0]);
-    writeToUART(&setCcwAngleLimit_1[0]);
-    writeToUART(&setCcwAngleLimit_2[0]);
-    writeToUART(&setCwAngleLimit_1[0]);
-    writeToUART(&setCwAngleLimit_2[0]);
-    writeToUART(&setCcwCompMargin_1[0]);
-    writeToUART(&setCcwCompMargin_2[0]);
-    writeToUART(&setCwCompMargin_1[0]);
-    writeToUART(&setCwCompMargin_2[0]);
+    writeToUART(setReturnDelayTime_1);
+    writeToUART(setReturnDelayTime_2);
+    writeToUART(setTorqueEnable_1);
+    writeToUART(setTorqueEnable_2);
+    writeToUART(setTorqueLimit_1);
+    writeToUART(setTorqueLimit_2);
+    writeToUART(setCcwAngleLimit_1);
+    writeToUART(setCcwAngleLimit_2);
+    writeToUART(setCwAngleLimit_1);
+    writeToUART(setCwAngleLimit_2);
+    testFunc(setLED);
+
+}
+
+void testFunc(uint8_t* servoPckt) {
+    for (size_t i = 0; i < servoPckt[3]+4; i++) {
+        Serial.print(servoPckt[i]);
+        Serial.print(" ");
+    }
+    Serial.println(" ");
+
 }
 
 void initializeUART() {
-    Uart1Event event1;//initialize UART A of the Teensy for enhanced features like DMA capability
-    Uart2Event event2;//initialize UART B ""
-    Uart3Event event3;//initialize UART C ""
 
     event1.txEventHandler = txEvent1;             //defines the function to trigger for sent bytes on Port 1 of the Teensy
     event1.rxEventHandler = rxEvent1;             //defines the function to trigger for received bytes on Port 1 of the Teensy
@@ -174,11 +195,18 @@ void readFromUSB() {
     newData = false;
     s = buf;
     s.append('}');
+    Serial.println(s);
     parseJsonString(s);
 }
 
 
 void writeToUART(uint8_t* servoPckt) {
+    for (size_t i = 0; i < servoPckt[3]+4; i++) {
+        Serial.print(servoPckt[i]);
+        Serial.print(" ");
+    }
+    Serial.println(" ");
+
     DynamixelMessage* USBMessage = new DynamixelMessage(servoPckt);
     if (idMap[servoPckt[2]] == 1 || scanMode) {
         pushToQueue1(USBMessage);
@@ -243,7 +271,7 @@ void convertToReadableVelocities(Vector<int>* servoPckt) {
 }
 
 void servoReadPcktConstructor() {
-    uint8_t servoPckt[8] {FF, FF, 0, _READ_LENGHT, _READ_SERVO_DATA,
+    uint8_t servoPckt[8] {FF, FF, 0, _WRITE_LENGHT, _READ_SERVO_DATA,
         SERVO_REGISTER_PRESENT_SPEED, _NUM_OF_BYTES_TO_READ, 0};
     for (uint8_t id = 1; id <3; id++) {
         uint8_t checkSum = 0;
@@ -285,8 +313,9 @@ void servoWritePcktConstructor(Vector<int>* velArray) {
                 checkSum += servoPckt[i];
             }
         checkSum = ~(checkSum) & 255;
-        servoPckt[sizeof servoPckt-1] = checkSum;
-
+        servoPckt[8] = checkSum;
+        Serial.println(servoPckt[6]);
+        Serial.println(servoPckt[7]);
 
         Serial.print("ServoPacket for ID: ");
         Serial.println(id);
@@ -295,7 +324,7 @@ void servoWritePcktConstructor(Vector<int>* velArray) {
             Serial.print(" ");
         }
         Serial.println("");
-        writeToUART(&servoPckt[0]);
+        writeToUART(servoPckt);
     }
     velArray->clear();
 }
@@ -434,20 +463,14 @@ void noMessageReceival( UartEvent*          event,
 
 
 void noMessageReceival1(){
-    Uart1Event event1;
-    IntervalTimer txTimer1;
   noMessageReceival(&event1, &txTimer1, &resendCounter1,send1, &messageVector1);
 }
 
 void noMessageReceival2(){
-    Uart2Event event2;
-    IntervalTimer txTimer2;
     noMessageReceival(&event2, &txTimer2, &resendCounter2,send2, &messageVector2);
 }
 
 void noMessageReceival3(){
-    Uart3Event event3;
-    IntervalTimer txTimer3;
     noMessageReceival(&event3, &txTimer3, &resendCounter3,send3, &messageVector3);
 }
 
@@ -459,17 +482,14 @@ void txEvent( IntervalTimer* timer,                                             
 }
 
 void txEvent1(){
-    IntervalTimer txTimer1;
   txEvent(&txTimer1, noMessageReceival1);
 }
 
 void txEvent2(){
-    IntervalTimer txTimer2;
   txEvent(&txTimer2, noMessageReceival2);
 }
 
 void txEvent3(){
-    IntervalTimer txTimer3;
   txEvent(&txTimer3, noMessageReceival3);
 }
 
@@ -547,23 +567,14 @@ void rxEvent( UartEvent*          event,
 
 
 void rxEvent1(){
-    Uart1Event event1;
-    IntervalTimer txTimer1;
-    volatile uint8_t rcvdPkt1[MAX_LENGTH_OF_MESSAGE];
   rxEvent(&event1, &txTimer1, &sync1, &posInArray1, &numOfBytesToRead1, rcvdPkt1,1,&resendCounter1, rxResync1, send1);
 }
 
 void rxEvent2(){
-    Uart2Event event2;
-    IntervalTimer txTimer2;
-    volatile uint8_t rcvdPkt2[MAX_LENGTH_OF_MESSAGE];
   rxEvent(&event2, &txTimer2, &sync2, &posInArray2, &numOfBytesToRead2, rcvdPkt2,2,&resendCounter2, rxResync2, send2);
 }
 
 void rxEvent3(){
-    Uart3Event event3;
-    IntervalTimer txTimer3;
-    volatile uint8_t rcvdPkt3[MAX_LENGTH_OF_MESSAGE];
   rxEvent(&event3, &txTimer3, &sync3, &posInArray3, &numOfBytesToRead3, rcvdPkt3,3,&resendCounter3, rxResync3, send3);
 }
 
@@ -598,20 +609,14 @@ void rxResync( UartEvent*          event,
 
 
 void rxResync1(){
-    Uart1Event event1;
-    volatile uint8_t rcvdPkt1[MAX_LENGTH_OF_MESSAGE];
   rxResync(&event1, &sync1, &posInArray1, rcvdPkt1, rxEvent1);
 }
 
 void rxResync2(){
-    Uart2Event event2;
-    volatile uint8_t rcvdPkt2[MAX_LENGTH_OF_MESSAGE];
   rxResync(&event2, &sync2, &posInArray2, rcvdPkt2, rxEvent2);
 }
 
 void rxResync3(){
-    Uart3Event event3;
-    volatile uint8_t rcvdPkt3[MAX_LENGTH_OF_MESSAGE];
   rxResync(&event3, &sync3, &posInArray3, rcvdPkt3, rxEvent3);
 }
 
@@ -633,20 +638,14 @@ void send(UartEvent*                      event,
 }
 
 void send1(){
-    Uart1Event event1;
-    QueueArray <DynamixelMessage*> queue1(50);
   send(&event1, &queue1, &resendCounter1,&busy1, &messageVector1);
 }
 
 void send2(){
-    Uart2Event event2;
-    QueueArray <DynamixelMessage*> queue2(50);
   send(&event2, &queue2, &resendCounter2,&busy2, &messageVector2);
 }
 
 void send3(){
-    Uart3Event event3;
-    QueueArray <DynamixelMessage*> queue3(50);
   send(&event3, &queue3, &resendCounter3,&busy3, &messageVector3);
 }
 
@@ -662,16 +661,13 @@ void pushToQueue( QueueArray<DynamixelMessage*>*  queue,
 }
 
 void pushToQueue1(DynamixelMessage* messageToPush){
-    QueueArray <DynamixelMessage*> queue1(50);
     pushToQueue(&queue1,messageToPush,&busy1,send1);
 }
 
 void pushToQueue2(DynamixelMessage* messageToPush){
-    QueueArray <DynamixelMessage*> queue2(50);
     pushToQueue(&queue2,messageToPush,&busy2,send2);
 }
 
 void pushToQueue3(DynamixelMessage* messageToPush){
-    QueueArray <DynamixelMessage*> queue3(50);
     pushToQueue(&queue3,messageToPush,&busy3,send3);
 }

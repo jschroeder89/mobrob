@@ -153,9 +153,10 @@ void setServoVelocities(int fd, int velLeft, int velRight) {
 int main(int argc, char *argv[]) {
     int fd = 0;
     fd = openPort("/dev/ttyACM0");
-    requestSensorData(fd);
-    //requestServoData(fd);
-    //setServoVelocities(fd, 200, 80);
+
+    //requestSensorData(fd);
+    requestServoData(fd);
+    //setServoVelocities(fd, 0, 0);
 
     return 0;
 }

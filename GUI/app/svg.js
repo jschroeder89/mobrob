@@ -18,9 +18,6 @@ function valueToHexStringColor(val) {
 
 var fillColor = valueToHexStringColor(1000);
 
-//var dezVal = testValue + nonCollisionColorValue
-//var hexStr = parseInt(testValue + nonCollisionColorValue, 16)
-//console.log(dezVal, hexStr);
 var sensorfieldStr = "sensorfield_"
 var sensorArray = [];
 for (var i = 0; i < 40; i++) {
