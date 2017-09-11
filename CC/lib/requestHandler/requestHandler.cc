@@ -44,7 +44,7 @@ void requestHandler(int fd, int op) {
 
 int readFromUSB(int fd, int op) {
     char buf[bufLen];
-    int n = 0, nbytes = 0, i = 0;
+    int n = 0, nbytes = 0;
     std::string json;
 
 
@@ -53,7 +53,7 @@ int readFromUSB(int fd, int op) {
         n = read(fd, buf+nbytes, bufLen-nbytes);
 
         if (buf[nbytes-1] == '}') {
-            buf[nbytes] == '\0';
+            buf[nbytes] = '\0';
             json = buf;
             break;
         }

@@ -5,24 +5,20 @@ uint8_t posInArrayUsb = 0;
 //boolean newData = false;
 
 Uart1Event event1;
-IntervalTimer txTimer1;
 Uart2Event event2;
-IntervalTimer txTimer2;
 Uart3Event event3;
+
+IntervalTimer txTimer1;
+IntervalTimer txTimer2;
 IntervalTimer txTimer3;
+
 volatile uint8_t rcvdPkt1[MAX_LENGTH_OF_MESSAGE];
-
 volatile uint8_t rcvdPkt2[MAX_LENGTH_OF_MESSAGE];
-
 volatile uint8_t rcvdPkt3[MAX_LENGTH_OF_MESSAGE];
 
-
 QueueArray <DynamixelMessage*> queue1(50);
-
 QueueArray <DynamixelMessage*> queue2(50);
-
 QueueArray <DynamixelMessage*> queue3(50);
-
 
 volatile uint16_t posInArray1 = 0;
 volatile uint16_t posInArray2 = 0;
@@ -78,7 +74,6 @@ void scanPort() {
             DynamixelMessage* ScanMessage1 = new DynamixelMessage(search); //messages are being generated and put
             DynamixelMessage* ScanMessage2 = new DynamixelMessage(search); //
             DynamixelMessage* ScanMessage3 = new DynamixelMessage(search); //
-
 
             queue1.push(ScanMessage1);                                                   //messages are being pushed
             queue2.push(ScanMessage2);                                                   //into their corresponding queues
