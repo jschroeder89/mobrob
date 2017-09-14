@@ -103,8 +103,7 @@ void initializeServos() {
     uint8_t setCcwAngleLimit_2[9] = {255, 255, 2, 5, 3, 8, 0, 0, 237};
     uint8_t setCwAngleLimit_1[9] = {255, 255, 1, 5, 3, 6, 0, 0, 240};
     uint8_t setCwAngleLimit_2[9] = {255, 255, 2, 5, 3, 6, 0, 0, 239};
-    uint8_t setLED[8] = {255, 255, 2, 4, 3, 25, 0, 219};    //for debug purposes
-    //uint8_t setLED_2[8] = {255, 255, 2, 4, 3, 25, 0, 219};
+    //uint8_t setLED[8] = {255, 255, 2, 4, 3, 25, 0, 219};    //for debug purposes
 
     writeToUART(setReturnDelayTime_1);
     writeToUART(setReturnDelayTime_2);
@@ -116,12 +115,12 @@ void initializeServos() {
     writeToUART(setCcwAngleLimit_2);
     writeToUART(setCwAngleLimit_1);
     writeToUART(setCwAngleLimit_2);
-    testFunc(setLED);
+
 
 }
 
 void testFunc(uint8_t* servoPckt) {
-    for (size_t i = 0; i < servoPckt[3]+4; i++) {
+    for (uint8_t i = 0; i < servoPckt[3]+4; i++) {
         Serial.print(servoPckt[i]);
         Serial.print(" ");
     }
@@ -164,6 +163,7 @@ void readFromUSB() {
     String s;
     delay(10);
     while (Serial.available() > 0 && newData == false) {
+        delay(2);
         c = Serial.read();
         if (inProgress == true) {
             if (c != '}') {
@@ -196,7 +196,7 @@ void readFromUSB() {
 
 
 void writeToUART(uint8_t* servoPckt) {
-    for (size_t i = 0; i < servoPckt[3]+4; i++) {
+    for (uint8_t i = 0; i < servoPckt[3]+4; i++) {
         Serial.print(servoPckt[i]);
         Serial.print(" ");
     }
@@ -225,48 +225,56 @@ void readStatusPckt(Vector<int>* statusPckt) {
 
 
 void convertToReadableVelocities(Vector<int>* servoPckt) {
+    /*Serial.println(servoPckt->at(0));
+    Serial.println(servoPckt->at(1));
+    Serial.println(servoPckt->at(2));*/
     int lowByte = 0, highByte = 0;
     static int velLeft, velRight;
     static boolean velLeftNotEmpty;
     static boolean velRightNotEmpty;
 
-    if (servoPckt->at(0) == 1 && velLeftNotEmpty == true) {
-        lowByte = lowByte & 255;
-        highByte = highByte << 8;
+    if (servoPckt->at(0) == 1 && velLeftNotEmpty == false) {
+        lowByte = servoPckt->at(1) & 255;
+        highByte = servoPckt->at(2) << 8;
         velLeft = lowByte + highByte;
-        velLeftNotEmpty = false;
+        Serial.println(velLeft);
+        velLeftNotEmpty = true;
         if (velLeft >= 1024) {
             velLeft -= 1024;
             velLeft *= (-1);
+        } else {
+            velLeft = velLeft;
         }
     }
 
-    else if (servoPckt->at(0) == 2 && velRightNotEmpty == true) {
-        lowByte = lowByte & 255;
-        highByte = highByte << 8;
+    if (servoPckt->at(0) == 2 && velRightNotEmpty == false) {
+        lowByte = servoPckt->at(1) & 255;
+        highByte = servoPckt->at(2) << 8;
         velRight = lowByte +  highByte;
-        velRightNotEmpty = false;
+        Serial.println(velRight);
+        velRightNotEmpty = true;
         if (velRight > 1024) {
             velRight -= 1024;
-        }
-        else {
+        } else {
             velRight *= (-1);
         }
     }
-    if (velLeftNotEmpty && velRightNotEmpty == false) {
+    if (velLeftNotEmpty && velRightNotEmpty == true) {
         int velArray[2] = {0};
         velArray[0] = velLeft;
         velArray[1] = velRight;
+        //Serial.println(velArray[0]);
+        //Serial.println(velArray[1]);
         velLeft = 0, velRight = 0;
-        velLeftNotEmpty = true;
-        velRightNotEmpty = true;
+        velLeftNotEmpty = false;
+        velRightNotEmpty = false;
 
         convertServoDataToJson(&velArray[0]);
     }
 }
 
 void servoReadPcktConstructor() {
-    uint8_t servoPckt[8] {FF, FF, 0, _WRITE_LENGHT, _READ_SERVO_DATA,
+    uint8_t servoPckt[8] {FF, FF, 0, _READ_LENGHT, _READ_SERVO_DATA,
         SERVO_REGISTER_PRESENT_SPEED, _NUM_OF_BYTES_TO_READ, 0};
     for (uint8_t id = 1; id <3; id++) {
         uint8_t checkSum = 0;
@@ -284,7 +292,7 @@ void servoReadPcktConstructor() {
         Serial.print(" ");
     }
     Serial.println("");
-    writeToUART(&servoPckt[0]);
+    writeToUART(servoPckt);
     }
 }
 
@@ -298,23 +306,38 @@ void servoWritePcktConstructor(Vector<int>* velArray) {
         uint8_t checkSum = 0;
         servoPckt[2] = id;
         val = velArray->at(id-1);
-        if (val < 0) {
-            val *= (-1);
-            val += 1024;
+        if (id == 1) {
+            if (val < 0) {
+                val *= -1;
+                val += 1024;
+            } else {
+                val = val;
+            }
         }
+            if (id == 2) {
+                if (val < 0) {
+                    val *= -1;
+                } else {
+                    val += 1024;
+                }
+            }
+        Serial.println("Pre-Shift");
+        Serial.println(servoPckt[6]);
+        Serial.println(servoPckt[7]);
         servoPckt[6] = val & 255;
         servoPckt[7] = val >> 8;
+        Serial.println("Post-Shift");
+        Serial.println(servoPckt[6]);
+        Serial.println(servoPckt[7]);
             for (size_t i = 2; i < sizeof servoPckt-1; i++) {
                 checkSum += servoPckt[i];
             }
         checkSum = ~(checkSum) & 255;
         servoPckt[8] = checkSum;
-        Serial.println(servoPckt[6]);
-        Serial.println(servoPckt[7]);
 
         Serial.print("ServoPacket for ID: ");
         Serial.println(id);
-        for (size_t i = 0; i < sizeof servoPckt; i++) {
+        for (uint8_t i = 0; i < servoPckt[3] + 4; i++) {
             Serial.print(servoPckt[i] );
             Serial.print(" ");
         }
@@ -354,15 +377,12 @@ void requestHandler() {
         char requestByte = Serial.read();
         switch (requestByte) {
             case sensorReadByte:
-                Serial.println(sensorReadByte);
                 readSensorData();
                 break;
             case servoReadByte:
-                Serial.println(servoReadByte);
                 servoReadPcktConstructor();
                 break;
             case servoWriteByte:
-                Serial.println(servoWriteByte);
                 readFromUSB();
                 break;
         }
@@ -535,8 +555,12 @@ void rxEvent( UartEvent*          event,
          // Serial.println(rcvdPkt[i]);
         }
       }
-      statusPckt.push_back(rcvdPkt[5]);
+      /*Serial.println(rcvdPkt[2]);
+      Serial.println(rcvdPkt[5]);
+      Serial.println(rcvdPkt[6]);*/
+
       statusPckt.push_back(rcvdPkt[2]);
+      statusPckt.push_back(rcvdPkt[5]);
       statusPckt.push_back(rcvdPkt[6]);
       readStatusPckt(&statusPckt);
 

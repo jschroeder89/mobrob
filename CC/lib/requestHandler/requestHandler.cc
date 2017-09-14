@@ -1,4 +1,5 @@
 #include "requestHandler.hpp"
+#include <unistd.h>
 
 int openPort(char const *port) {
     int fd = open(port, O_RDWR | O_NDELAY);
@@ -47,8 +48,6 @@ int readFromUSB(int fd, int op) {
     int n = 0, nbytes = 0;
     std::string json;
 
-
-
     do {
         n = read(fd, buf+nbytes, bufLen-nbytes);
 
@@ -63,7 +62,7 @@ int readFromUSB(int fd, int op) {
     json = json.erase(0, jsonStartPos);
     size_t jsonEndPos = json.find('}');
     json = json.erase(jsonEndPos+1, json.length());
-    std::cout << json[json.length()-1] << std::endl << json << std::endl;
+    std::cout << json << std::endl;
     if (op == sensorRead) {
         jsonSensorParser(json);
     } else if (op == servoRead) {
@@ -105,6 +104,7 @@ void jsonServoParser(std::string json) {
     std::vector<int> servoData;
     servoData.push_back(root["velLeft"]);
     servoData.push_back(root["velRight"]);
+    std::cout << servoData[0] << std::endl << servoData[1] << std::endl;
 
 }
 
@@ -155,8 +155,8 @@ int main(int argc, char *argv[]) {
     fd = openPort("/dev/ttyACM0");
 
     //requestSensorData(fd);
-    requestServoData(fd);
-    //setServoVelocities(fd, 0, 0);
+    //requestServoData(fd);
+    setServoVelocities(fd, 0, 0);
 
     return 0;
 }

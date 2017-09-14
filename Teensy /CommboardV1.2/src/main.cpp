@@ -1,12 +1,12 @@
 #include <DynamixelController.hpp>
 
 void setup() {
+    I2C i2c;
+    Serial.begin(9600);
     pinMode(13, OUTPUT);
     digitalWrite(13, HIGH);
-    Serial.begin(9600);
     initializeUART();
     initializeServos();
-    I2C i2c;
     i2c.initializeI2C();
     digitalWrite(13, LOW);
 }
