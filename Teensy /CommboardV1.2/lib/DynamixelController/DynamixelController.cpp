@@ -225,20 +225,17 @@ void readStatusPckt(Vector<int>* statusPckt) {
 
 
 void convertToReadableVelocities(Vector<int>* servoPckt) {
-    /*Serial.println(servoPckt->at(0));
-    Serial.println(servoPckt->at(1));
-    Serial.println(servoPckt->at(2));*/
     int lowByte = 0, highByte = 0;
     static int velLeft, velRight;
-    static boolean velLeftNotEmpty;
-    static boolean velRightNotEmpty;
+    static boolean velLeftIsEmpty;
+    static boolean velRightIsEmpty;
 
-    if (servoPckt->at(0) == 1 && velLeftNotEmpty == false) {
+    if (servoPckt->at(0) == 1 && velLeftIsEmpty == false) {
         lowByte = servoPckt->at(1) & 255;
         highByte = servoPckt->at(2) << 8;
         velLeft = lowByte + highByte;
         Serial.println(velLeft);
-        velLeftNotEmpty = true;
+        velLeftIsEmpty = true;
         if (velLeft >= 1024) {
             velLeft -= 1024;
             velLeft *= (-1);
@@ -247,27 +244,25 @@ void convertToReadableVelocities(Vector<int>* servoPckt) {
         }
     }
 
-    if (servoPckt->at(0) == 2 && velRightNotEmpty == false) {
+    if (servoPckt->at(0) == 2 && velRightIsEmpty == false) {
         lowByte = servoPckt->at(1) & 255;
         highByte = servoPckt->at(2) << 8;
         velRight = lowByte +  highByte;
         Serial.println(velRight);
-        velRightNotEmpty = true;
+        velRightIsEmpty = true;
         if (velRight > 1024) {
             velRight -= 1024;
         } else {
             velRight *= (-1);
         }
     }
-    if (velLeftNotEmpty && velRightNotEmpty == true) {
+    if (velLeftIsEmpty && velRightIsEmpty == true) {
         int velArray[2] = {0};
         velArray[0] = velLeft;
         velArray[1] = velRight;
-        //Serial.println(velArray[0]);
-        //Serial.println(velArray[1]);
         velLeft = 0, velRight = 0;
-        velLeftNotEmpty = false;
-        velRightNotEmpty = false;
+        velLeftIsEmpty = false;
+        velRightIsEmpty = false;
 
         convertServoDataToJson(&velArray[0]);
     }
