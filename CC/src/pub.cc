@@ -5,7 +5,7 @@
 #include <boost/thread/thread.hpp>
 
 int main(int argc, char *argv[]) {
-    int bufferSize;
+    int bufferSize = 0;
     char buf[bufferSize];
 
     zmq::context_t context (1);
@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
     sensorFrontLeft.add(3098);
     bufferSize = root.measureLength();
     root.printTo(buf, sizeof buf);
-
 
     while (1) {
         publisher.send(buf, bufferSize);

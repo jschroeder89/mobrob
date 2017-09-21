@@ -1,5 +1,5 @@
 #include "requestHandler.hpp"
-#include <unistd.h>
+//#include <unistd.h>
 
 int openPort(char const *port) {
     int fd = open(port, O_RDWR | O_NDELAY);
@@ -38,7 +38,7 @@ void requestHandler(int fd, int op) {
     int n = write(fd, &byte, sizeof byte);
     //std::cout << "Written " << n << " Byte(s)" << std::endl;
     //std::cout << byte << std::endl;
-    if (n <= 0) {
+    if (n < 0) {
         std::cout << "No bytes writen!" << std::endl;
     }
 }
@@ -72,40 +72,40 @@ int readFromUSB(int fd, int op) {
 }
 
 void jsonSensorParser(std::string json) {
-
-    //DynamicJsonBuffer jsonBuffer;
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    std::cout << root["FL"][0] << std::endl;
+    std::vector<int> FL, FR, L, R, B, allData;
+    std::vector<std::vector<int> > sensorData = {FL, FR, L, R, B};
+    //std::cout << root["FL"][0] << std::endl;
 
-
-    std::vector<int> FL, FR, L, R, B;
-    std::vector<std::vector<int> > sensorData;
-
-    /*for (size_t i = 0; i < 8; i++) {
+    for (size_t i = 0; i < 8; i++) {
         FL.push_back(root["FL"][i]);
         FR.push_back(root["FR"][i]);
         L.push_back(root["L"][i]);
-        B.push_back(root["B"][i]);
         R.push_back(root["R"][i]);
+        B.push_back(root["B"][i]);
     }
-    sensorData.push_back(FL);
-    sensorData.push_back(FR);
-    sensorData.push_back(L);
-    sensorData.push_back(B);
-    sensorData.push_back(R);
-*/
+    allData.reserve(FL.size() + FR.size() + R.size() + B.size() + L.size());
+        allData.insert(allData.end(), FL.begin(), FL.end());
+        allData.insert(allData.end(), FR.begin(), FR.end());
+        allData.insert(allData.end(), R.begin(), R.end());
+        allData.insert(allData.end(), B.begin(), B.end());
+        allData.insert(allData.end(), L.begin(), L.end());
+
+    detectCollisionSide(sensorData);
+    copySensorVector(allData);
 }
 
 void jsonServoParser(std::string json) {
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-
     std::vector<int> servoData;
+
     servoData.push_back(root["velLeft"]);
     servoData.push_back(root["velRight"]);
-    std::cout << servoData[0] << std::endl << servoData[1] << std::endl;
 
+    convertTicksToVelocities(servoData);
+    std::cout << servoData[0] << std::endl << servoData[1] << std::endl;
 }
 
 void writeToUSB(int fd, JsonObject& root, int bufferSize) {

@@ -1,6 +1,7 @@
 #ifndef requestHandler_HPP
 #define requestHandler_HPP
 
+//Includes
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
@@ -10,6 +11,7 @@
 #include <cstring>
 #include <vector>
 #include <ArduinoJson.h>
+#include "/home/johann/github/mobrob/CC/lib/dataHandler/dataHandler.hpp"
 
 //Defines
 #define sensorRead 1
