@@ -35,6 +35,26 @@ int main(int argc, char *argv[]) {
     while (true) {
         requestSensorData(fd);
         foo(fd, publisher);
+        switch (Sensor::collisionSide) {
+            case Sensor::hasContact::frontLeft:
+                std::cout << "FL" << std::endl;
+                break;
+            case Sensor::hasContact::frontRight:
+                std::cout << "FR" << std::endl;
+                break;
+            case Sensor::hasContact::left:
+                std::cout << "L" << std::endl;
+                break;
+            case Sensor::hasContact::rear:
+                std::cout << "B" << std::endl;
+                break;
+            case Sensor::hasContact::right:
+                std::cout << "R" << std::endl;
+                break;
+            default:
+                Sensor::collisionSide = Sensor::hasContact::none;
+                break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 

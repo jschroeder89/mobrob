@@ -83,26 +83,29 @@ int readFromUSB(int fd, int op) {
 void jsonSensorParser(std::string json) {
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    std::vector<int> FL, FR, L, R, B;
+    std::vector<int> FL, FR, L, R, B, flatData;
     std::vector<std::vector<int> > sensorData;
 
     for (size_t i = 0; i < 8; i++) {
         FL.push_back(root["FL"][i]);
-            Sensor::sensorDataFlat.push_back(root["FL"][i]);
         FR.push_back(root["FR"][i]);
-            Sensor::sensorDataFlat.push_back(root["FR"][i]);
         L.push_back(root["L"][i]);
-            Sensor::sensorDataFlat.push_back(root["L"][i]);
-        R.push_back(root["B"][i]);
-            Sensor::sensorDataFlat.push_back(root["B"][i]);
-        B.push_back(root["R"][i]);
-            Sensor::sensorDataFlat.push_back(root["R"][i]);
+        B.push_back(root["B"][i]);
+        R.push_back(root["R"][i]);
     }
     sensorData.push_back(FL);
     sensorData.push_back(FR);
     sensorData.push_back(L);
     sensorData.push_back(B);
     sensorData.push_back(R);
+
+    Sensor::sensorDataFlat.reserve(40);
+    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), FL.begin(), FL.end());
+    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), FR.begin(), FR.end());
+    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), L.begin(), L.end());
+    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), B.begin(), B.end());
+    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), R.begin(), R.end());
+
     detectCollisionSide(sensorData);
 }
 
@@ -112,7 +115,6 @@ void detectCollisionSide(std::vector<std::vector<int> >& v) {
     for (size_t i = 0; i < 5; i++) {
         for (size_t j = 0; j < 8; j++) {
             if (v.at(i).at(j) > collisionThreshold) {
-                std::cout << i << "\t" << j << std::endl;
                 switch (i) {
                     case 0:
                         Sensor::collisionSide = Sensor::hasContact::frontLeft;
@@ -143,8 +145,8 @@ void jsonServoParser(std::string json) {
     servoData.push_back(root["velLeft"]);
     servoData.push_back(root["velRight"]);
 
-    convertTicksToVelocities(servoData);
     std::cout << servoData[0] << std::endl << servoData[1] << std::endl;
+    convertTicksToVelocities(servoData);
 }
 
 

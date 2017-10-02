@@ -6,7 +6,6 @@ sock.subscribe('');
 console.log('Subscriber connected to port 5555');
 
 initializeSvgs();
-
 sock.on('message', function(message) {
     var json = JSON.parse(String(message));
     for (var i = 0; i < json.sensor.length; i++) {
