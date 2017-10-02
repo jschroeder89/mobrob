@@ -7,12 +7,8 @@ function initializeSvgs() {
     }
 }
 
-function colorizeSensorField(field, color) {
-    document.getElementById(sensorArray[field]).style.fill = color;
-}
-
-function returnSensorField(i) {
-    return sensorArray[i];
+function colorizeSensorField(field, value) {
+    document.getElementById(sensorArray[field]).style.fill = value;
 }
 
 function valueToHexStringColor(val) {

@@ -7,8 +7,8 @@
 //#include <dataHandler.hpp>
 #include "requestHandler.hpp"
 
+//Sensor::hasContact Sensor::collisionSide;
 std::vector<int> Sensor::sensorDataFlat;
-Sensor::hasContact collisionSide;
 std::vector<float> Servo::velocitiesMeterPerSec;
 std::vector<float> Servo::coords;
 
@@ -47,8 +47,6 @@ void requestHandler(int fd, int op) {
                 break;
     }
     int n = write(fd, &byte, sizeof byte);
-    //std::cout << "Written " << n << " Byte(s)" << std::endl;
-    //std::cout << byte << std::endl;
     if (n < 0) {
         std::cout << "No bytes writen!" << std::endl;
     }
@@ -61,7 +59,6 @@ int readFromUSB(int fd, int op) {
 
     do {
         n = read(fd, buf+nbytes, bufLen-nbytes);
-
         if (buf[nbytes-1] == '}') {
             buf[nbytes] = '\0';
             json = buf;
@@ -69,11 +66,12 @@ int readFromUSB(int fd, int op) {
         }
         nbytes +=n;
     } while(nbytes <= bufLen);
+
     size_t jsonStartPos = json.find('{');
     json = json.erase(0, jsonStartPos);
     size_t jsonEndPos = json.find('}');
     json = json.erase(jsonEndPos+1, json.length());
-    std::cout << json << std::endl;
+
     if (op == sensorRead) {
         jsonSensorParser(json);
     } else if (op == servoRead) {
@@ -85,76 +83,54 @@ int readFromUSB(int fd, int op) {
 void jsonSensorParser(std::string json) {
     StaticJsonBuffer<jsonBufLen> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    std::vector<int> FL, FR, L, R, B, sensorDataFlat;
-    std::vector<std::vector<int> > sensorData = {FL, FR, L, R, B};
-    //std::cout << root["FL"][0] << std::endl;
+    std::vector<int> FL, FR, L, R, B;
+    std::vector<std::vector<int> > sensorData;
 
     for (size_t i = 0; i < 8; i++) {
         FL.push_back(root["FL"][i]);
-            Sensor::sensorDataFlat.push_back(FL.at(i));
+            Sensor::sensorDataFlat.push_back(root["FL"][i]);
         FR.push_back(root["FR"][i]);
-            Sensor::sensorDataFlat.push_back(FR.at(i));
+            Sensor::sensorDataFlat.push_back(root["FR"][i]);
         L.push_back(root["L"][i]);
-            Sensor::sensorDataFlat.push_back(L.at(i));
-        R.push_back(root["R"][i]);
-            Sensor::sensorDataFlat.push_back(R.at(i));
-        B.push_back(root["B"][i]);
-            Sensor::sensorDataFlat.push_back(B.at(i));
+            Sensor::sensorDataFlat.push_back(root["L"][i]);
+        R.push_back(root["B"][i]);
+            Sensor::sensorDataFlat.push_back(root["B"][i]);
+        B.push_back(root["R"][i]);
+            Sensor::sensorDataFlat.push_back(root["R"][i]);
     }
-
+    sensorData.push_back(FL);
+    sensorData.push_back(FR);
+    sensorData.push_back(L);
+    sensorData.push_back(B);
+    sensorData.push_back(R);
     detectCollisionSide(sensorData);
 }
 
 void detectCollisionSide(std::vector<std::vector<int> >& v) {
-    Sensor::hasContact collisionSide = Sensor::hasContact::none;
+    Sensor::collisionSide = Sensor::hasContact::none;
 
-    for (int i = 0; i < 8; i++) {
-        if (v.at(0).at(i) >= collisionThreshold
-        && collisionSide == Sensor::hasContact::none) {
-            collisionSide = Sensor::hasContact::frontLeft;
-            break;
-        } else {
-            collisionSide = Sensor::hasContact::none;
-        }
-    }
-
-    for (int i = 0; i < 8; i++) {
-        if (v.at(1).at(i) >= collisionThreshold
-        && collisionSide == Sensor::hasContact::none) {
-            collisionSide = Sensor::hasContact::frontRight;
-            break;
-        } else {
-            collisionSide = Sensor::hasContact::none;
-        }
-    }
-
-    for (int i = 0; i < 8; i++) {
-        if (v.at(2).at(i) >= collisionThreshold
-        && collisionSide == Sensor::hasContact::none) {
-            collisionSide = Sensor::hasContact::right;
-            break;
-        } else {
-            collisionSide = Sensor::hasContact::none;
-        }
-    }
-
-    for (int i = 0; i < 8; i++) {
-        if (v.at(3).at(i) >= collisionThreshold
-        && collisionSide == Sensor::hasContact::none) {
-            collisionSide = Sensor::hasContact::rear;
-            break;
-        } else {
-            collisionSide = Sensor::hasContact::none;
-        }
-    }
-
-    for (int i = 0; i < 8; i++) {
-        if (v.at(4).at(i) >= collisionThreshold
-        && collisionSide == Sensor::hasContact::none) {
-            collisionSide = Sensor::hasContact::left;
-            break;
-        } else {
-            collisionSide = Sensor::hasContact::none;
+    for (size_t i = 0; i < 5; i++) {
+        for (size_t j = 0; j < 8; j++) {
+            if (v.at(i).at(j) > collisionThreshold) {
+                std::cout << i << "\t" << j << std::endl;
+                switch (i) {
+                    case 0:
+                        Sensor::collisionSide = Sensor::hasContact::frontLeft;
+                        break;
+                    case 1:
+                        Sensor::collisionSide = Sensor::hasContact::frontRight;
+                        break;
+                    case 2:
+                        Sensor::collisionSide = Sensor::hasContact::left;
+                        break;
+                    case 3:
+                        Sensor::collisionSide = Sensor::hasContact::rear;
+                        break;
+                    case 4:
+                        Sensor::collisionSide = Sensor::hasContact::right;
+                        break;
+                }
+            }
         }
     }
 }
@@ -196,12 +172,11 @@ void getCoordinates(float t) {
 
 }
 
-char GUIData() {
-    int bufferSize = 0;
-    char buffer[bufferSize];
+std::string GUIData() {
+    std::string json;
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-    root["zmq"] = "message";
+    root["message"] = "zmq";
     JsonArray& sensor = root.createNestedArray("sensor");
     JsonArray& path = root.createNestedArray("path");
 
@@ -212,19 +187,19 @@ char GUIData() {
             path.add(Servo::coords.at(i));
         }
 
-    bufferSize = root.measureLength();
-    root.printTo(buffer, bufferSize+1);
+    Sensor::sensorDataFlat.clear();
+    Servo::coords.clear();
+    root.printTo(json);
 
-    return *buffer;
+    return json;
 }
 
 void writeToUSB(int fd, JsonObject& root, int bufferSize) {
-    char buffer[bufferSize+1];
-    root.printTo(buffer, sizeof buffer);
-    int n = write(fd, &buffer, sizeof buffer);
-    if (n > 0) {
-        std::cout << "Written " << n << " Byte(s)" << std::endl;
-        std::cout << buffer << std::endl;
+    char buffer[bufferSize];
+    root.printTo(buffer, bufferSize+1);
+    int n = write(fd, &buffer, bufferSize+1);
+    if (n < 0) {
+        std::cout << "Could not write to USB port..." << std::endl;
     }
 }
 
@@ -233,7 +208,7 @@ void setVelocities(int fd, int velLeft, int velRight) {
 }
 
 void convertVelocitiesToJson(int fd, int velLeft, int velRight) {
-    StaticJsonBuffer<jsonBufLen> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
 
     root["data"] = "servoVels";

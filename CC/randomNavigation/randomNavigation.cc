@@ -4,6 +4,8 @@
 #include <chrono>
 
 void dataLoop(int fd, zmq::socket_t& pub) {
+    std::string json = GUIData();
+    const char* buffer = json.c_str();
     auto start = std::chrono::system_clock::now();
     requestHandler(fd, servoRead);
     requestHandler(fd, sensorRead);
@@ -11,9 +13,7 @@ void dataLoop(int fd, zmq::socket_t& pub) {
     auto dur = end - start;
     float t = dur.count();
     getCoordinates(t);
-    char buf = {0};
-    buf = GUIData();
-    pub.send(&buf, sizeof buf);
+    pub.send(buffer, json.size());
 }
 
 void moveForward(int fd) {

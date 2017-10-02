@@ -42,17 +42,17 @@ void convertSensorDataToJson(int sensorData[][8]) {
     root["data"] = "sensor";
     JsonArray& sensorFrontLeft = root.createNestedArray("FL");
     JsonArray& sensorFrontRight = root.createNestedArray("FR");
-    /*JsonArray& sensorRight = root.createNestedArray("R");
+    JsonArray& sensorRight = root.createNestedArray("R");
     JsonArray& sensorLeft = root.createNestedArray("L");
-    JsonArray& sensorBack = root.createNestedArray("B");*/
+    JsonArray& sensorBack = root.createNestedArray("B");
 
 
     for (int j = 0; j < 8; j++) {
         sensorFrontLeft.add(sensorData[0][j]);
         sensorFrontRight.add(sensorData[1][j]);
-        /*sensorLeft.add(sensorData[4][j]);
+        sensorLeft.add(sensorData[4][j]);
         sensorBack.add(sensorData[3][j]);
-        sensorRight.add(sensorData[2][j]);*/
+        sensorRight.add(sensorData[2][j]);
     }
     writeSensorDataToUSB(root);
 }

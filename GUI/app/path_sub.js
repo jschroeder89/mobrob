@@ -4,13 +4,12 @@ var zmq = require('zeromq')
 sock.connect('tcp://127.0.0.1:5555');
 sock.subscribe('');
 console.log('Subscriber connected to port 5555');
+Plotly.plot('path', data, layout);
 
 sock.on('message', function(message) {
-    str = String(message);
-    console.log(str);
-    /*var json = JSON.parse(str);
-    trace1.x.push(7);
-    trace1.y.push(8);
-    console.log(trace1.x[8]);
-    console.log(json.FL[0]);*/
+    var json = JSON.parse(String(message));
+    console.log(json.path[0], json.path[1]);
+    trace1.x.push(json.path[0]);
+    trace1.y.push(json.path[1]);
+    Plotly.update('path', data, layout);
 });

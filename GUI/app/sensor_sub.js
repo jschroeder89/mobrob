@@ -6,13 +6,10 @@ sock.subscribe('');
 console.log('Subscriber connected to port 5555');
 
 initializeSvgs();
-console.log(returnSensorField(2));
-var test = valueToHexStringColor(1000);
-console.log(test);
 
 sock.on('message', function(message) {
-    console.log(String(message));
-    str = String(message);
-    var json = JSON.parse(str);
-    console.log(json.FL[0]);
+    var json = JSON.parse(String(message));
+    for (var i = 0; i < json.sensor.length; i++) {
+        colorizeSensorField(i, valueToHexStringColor(json.sensor[i]));
+    }
 });

@@ -1,6 +1,6 @@
 var trace1 = {
-    x: [0, 1, 2, 3, 4, -1, -3, -5],
-    y: [0, 1, 2, 3, 4, -2, 3, -4],
+    x: [],
+    y: [],
     mode: 'lines+markers',
     marker: {
         color: 'rgb(0, 121, 241)',
@@ -26,4 +26,3 @@ var layout = {
 };
 
 var data = [trace1];
-Plotly.newPlot('path', data, layout);

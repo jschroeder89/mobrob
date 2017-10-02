@@ -12,8 +12,8 @@
 #define servoReadByte '2'
 #define servoWrite 3
 #define servoWriteByte '3'
-#define bufLen 1024
-#define jsonBufLen 1024
+#define bufLen 2048
+#define jsonBufLen 2048
 #define collisionThreshold 3000
 #define axisLength 0.15
 #define revolutionsPerMinute 0.916
@@ -23,6 +23,8 @@
 //Prototypes
 int openPort(char const *port);
 int readFromUSB(int fd);
+void requestSensorData(int fd);
+void requestServoData(int fd);
 void requestHandler(int fd, int op);
 void convertVelocitiesToJson(int fd, int velLeft, int velRight);
 void writeToUSB(int fd, JsonObject& root);
@@ -34,7 +36,7 @@ void detectCollisionSide(std::vector<std::vector<int> >& v);
 void copySensorVector(std::vector<int>& v);
 void convertTicksToVelocities(std::vector<int>& v);
 void getCoordinates(float t);
-char GUIData();
+std::string GUIData();
 
 class Sensor {
     public:
