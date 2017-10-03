@@ -21,8 +21,8 @@ var layout = {
     yaxis: {
         title: 'y-Position'
     },
-    width: 550,
-    height: 550
+    width: 750,
+    height: 750
 };
 
 var data = [trace1];

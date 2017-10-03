@@ -19,10 +19,10 @@ app.on('ready', function(){
 
 app.on('ready', function(){
     pathGUI = new BrowserWindow({
-        width: 600,
-        height: 600
+        width: 800,
+        height: 800
     });
     pathGUI.setPosition(pathGUI_x_Pos, pathGUI_y_Pos);
-    pathGUI.webContents.openDevTools();
+    //pathGUI.webContents.openDevTools();
     pathGUI.loadURL(`file://${__dirname}/app/pathGUI.html`);
 })
