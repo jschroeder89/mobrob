@@ -20,7 +20,18 @@ void capture() {
 }
 
 void foo(int fd, zmq::socket_t& pub) {
+    auto start = std::chrono::system_clock::now();
+
+    requestSensorData(fd);
+    requestServoData(fd);
+
+    auto end = std::chrono::system_clock::now();
+    auto dur = end - start;
+    float t = dur.count();
+
+    getCoordinates(t);
     std::string json = GUIData();
+    //std::cout << json << std::endl;
     const char* buffer = json.c_str();
     pub.send(buffer, json.size());
 }
@@ -35,12 +46,15 @@ int main(int argc, char *argv[]) {
 
     setServoVelocities(fd, 5, 5);
     //move(fd, 10, 10, 5, publisher);
-    hold(fd);
     while(1) {
-        requestSensorData(fd);
-        requestServoData(fd);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        foo(fd, publisher);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        if (Sensor::collisionSide != Sensor::hasContact::none) {
+            break;
+        }
     }
+    hold(fd);
     /*while (true) {
         requestSensorData(fd);
         foo(fd, publisher);

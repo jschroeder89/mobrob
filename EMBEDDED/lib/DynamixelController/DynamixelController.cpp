@@ -119,15 +119,6 @@ void initializeServos() {
 
 }
 
-void testFunc(uint8_t* servoPckt) {
-    for (uint8_t i = 0; i < servoPckt[3]+4; i++) {
-        Serial.print(servoPckt[i]);
-        Serial.print(" ");
-    }
-    Serial.println(" ");
-
-}
-
 void initializeUART() {
 
     event1.txEventHandler = txEvent1;             //defines the function to trigger for sent bytes on Port 1 of the Teensy
@@ -190,7 +181,6 @@ void readFromUSB() {
     newData = false;
     s = buf;
     s.append('}');
-    Serial.println(s);
     parseJsonString(s);
 }
 
@@ -280,20 +270,11 @@ void servoReadPcktConstructor() {
         checkSum = ~(checkSum) & 255;
     servoPckt[sizeof servoPckt-1] = checkSum;
 
-    Serial.print("ServoPacket for ID: ");
-    Serial.println(id);
-    for (size_t i = 0; i < sizeof servoPckt; i++) {
-        Serial.print(servoPckt[i]);
-        Serial.print(" ");
-    }
-    Serial.println("");
     writeToUART(servoPckt);
     }
 }
 
 void servoWritePcktConstructor(Vector<int>* velArray) {
-    Serial.println(velArray->at(0));
-    Serial.println(velArray->at(1));
     uint8_t servoPckt[9] {FF, FF, 0, _WRITE_LENGHT, _WRITE_SERVO_DATA,
         SERVO_REGISTER_MOVING_SPEED, 0, 0, 0};
     for (uint8_t id = 1; id < 3; id++) {
@@ -316,27 +297,14 @@ void servoWritePcktConstructor(Vector<int>* velArray) {
                     val += 1024;
                 }
             }
-        Serial.println("Pre-Shift");
-        Serial.println(servoPckt[6]);
-        Serial.println(servoPckt[7]);
         servoPckt[6] = val & 255;
         servoPckt[7] = val >> 8;
-        Serial.println("Post-Shift");
-        Serial.println(servoPckt[6]);
-        Serial.println(servoPckt[7]);
             for (size_t i = 2; i < sizeof servoPckt-1; i++) {
                 checkSum += servoPckt[i];
             }
         checkSum = ~(checkSum) & 255;
         servoPckt[8] = checkSum;
 
-        Serial.print("ServoPacket for ID: ");
-        Serial.println(id);
-        for (uint8_t i = 0; i < servoPckt[3] + 4; i++) {
-            Serial.print(servoPckt[i] );
-            Serial.print(" ");
-        }
-        Serial.println("");
         writeToUART(servoPckt);
     }
     velArray->clear();
@@ -365,6 +333,8 @@ void convertServoDataToJson(int* dataArray) {
 
 void writeToUSB(JsonObject& root) {
     root.printTo(Serial);
+    delay(10);
+    Serial.flush();
 }
 
 void requestHandler() {

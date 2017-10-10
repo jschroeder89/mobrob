@@ -8,13 +8,13 @@ void dataLoop(int fd, zmq::socket_t& pub) {
     auto start = std::chrono::system_clock::now();
         requestHandler(fd, servoRead);
         requestHandler(fd, sensorRead);
-        std::string json = GUIData();
-        const char* buffer = json.c_str();
     auto end = std::chrono::system_clock::now();
     auto dur = end - start;
     float t = dur.count();
     getCoordinates(t);
-    pub.send(buffer, json.size());
+    //std::string json = GUIData();
+    //const char* buffer = json.c_str();
+    //pub.send(buffer, json.size());
 }
 
 std::vector<int> rndmTurnVelocities() {

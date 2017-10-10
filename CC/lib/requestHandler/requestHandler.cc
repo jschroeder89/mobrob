@@ -103,7 +103,6 @@ void jsonSensorParser(std::string json) {
     flatData.insert(flatData.end(), L.begin(), L.end());
     flatData.insert(flatData.end(), B.begin(), B.end());
     flatData.insert(flatData.end(), R.begin(), R.end());
-    std::cout << flatData.size() << std::endl;
     Sensor::sensorDataFlat = flatData;
     detectCollisionSide(sensorData);
 }
@@ -143,7 +142,6 @@ void jsonServoParser(std::string json) {
 
     servoData.push_back(root["velLeft"]);
     servoData.push_back(root["velRight"]);
-
     convertTicksToVelocities(servoData);
 }
 
@@ -152,28 +150,34 @@ void convertTicksToVelocities(std::vector<int>& v) {
     for (int i = 0; i < 2; i++) {
         Servo::velocitiesMeterPerSec.push_back(
         wheelDiameter * M_PI * revolutionsPerMinute/60 * v.at(i));
-        std::cout << Servo::velocitiesMeterPerSec.at(i) << std::endl;
+        //std::cout << Servo::velocitiesMeterPerSec.at(i) << std::endl;
     }
 }
 
 void getCoordinates(float t) {
+    t /= 1e6;
     std::vector<float> coordinates;
     static float x_0, y_0, theta_0;
     float distanceLeft = t * Servo::velocitiesMeterPerSec.at(0);
     float distanceRight = t * Servo::velocitiesMeterPerSec.at(1);
     float distanceMiddle = (distanceLeft + distanceRight) / 2;
     float distanceDif = (distanceRight - distanceLeft) / 2 * axisLength;
+
     float theta = (distanceRight - distanceLeft)/axisLength + theta_0;
-    Servo::coords.push_back(theta);
+    coordinates.push_back(theta);
     theta_0 = theta;
 
-    float x = distanceMiddle * cosf(Servo::coords.at(2) * distanceDif) + x_0;
-    Servo::coords.push_back(x);
+    float x = distanceMiddle * cosf(theta + distanceDif) + x_0;
+    coordinates.push_back(x);
     x_0 = x;
+    //std::cout << x << std::endl;
 
-    float y = distanceMiddle * sinf(Servo::coords.at(2) * distanceDif) + y_0;
-    Servo::coords.push_back(y);
+    float y = distanceMiddle * sinf(theta + distanceDif) + y_0;
+    coordinates.push_back(y);
     y_0 = y;
+    //std::cout << y << std::endl;
+
+    Servo::coords = coordinates;
 }
 
 std::string GUIData() {
@@ -190,8 +194,7 @@ std::string GUIData() {
         for (size_t i = 0; i < 3; i++) {
             path.add(Servo::coords.at(i));
         }
-    std::cout << root << std::endl;
-    std::cout << Sensor::sensorDataFlat.size() << std::endl << Servo::coords.size() << std::endl;
+
     Servo::velocitiesMeterPerSec.clear();
     Sensor::sensorDataFlat.clear();
     Servo::coords.clear();
