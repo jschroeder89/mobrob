@@ -66,12 +66,10 @@ int readFromUSB(int fd, int op) {
         }
         nbytes +=n;
     } while(nbytes <= bufLen);
-
     size_t jsonStartPos = json.find('{');
     json = json.erase(0, jsonStartPos);
     size_t jsonEndPos = json.find('}');
     json = json.erase(jsonEndPos+1, json.length());
-
     if (op == sensorRead) {
         jsonSensorParser(json);
     } else if (op == servoRead) {
@@ -99,13 +97,14 @@ void jsonSensorParser(std::string json) {
     sensorData.push_back(B);
     sensorData.push_back(R);
 
-    Sensor::sensorDataFlat.reserve(40);
-    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), FL.begin(), FL.end());
-    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), FR.begin(), FR.end());
-    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), L.begin(), L.end());
-    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), B.begin(), B.end());
-    Sensor::sensorDataFlat.insert(Sensor::sensorDataFlat.end(), R.begin(), R.end());
-
+    flatData.reserve(40);
+    flatData.insert(flatData.end(), FL.begin(), FL.end());
+    flatData.insert(flatData.end(), FR.begin(), FR.end());
+    flatData.insert(flatData.end(), L.begin(), L.end());
+    flatData.insert(flatData.end(), B.begin(), B.end());
+    flatData.insert(flatData.end(), R.begin(), R.end());
+    std::cout << flatData.size() << std::endl;
+    Sensor::sensorDataFlat = flatData;
     detectCollisionSide(sensorData);
 }
 
@@ -145,7 +144,6 @@ void jsonServoParser(std::string json) {
     servoData.push_back(root["velLeft"]);
     servoData.push_back(root["velRight"]);
 
-    std::cout << servoData[0] << std::endl << servoData[1] << std::endl;
     convertTicksToVelocities(servoData);
 }
 
@@ -154,25 +152,28 @@ void convertTicksToVelocities(std::vector<int>& v) {
     for (int i = 0; i < 2; i++) {
         Servo::velocitiesMeterPerSec.push_back(
         wheelDiameter * M_PI * revolutionsPerMinute/60 * v.at(i));
+        std::cout << Servo::velocitiesMeterPerSec.at(i) << std::endl;
     }
 }
 
 void getCoordinates(float t) {
+    std::vector<float> coordinates;
+    static float x_0, y_0, theta_0;
     float distanceLeft = t * Servo::velocitiesMeterPerSec.at(0);
     float distanceRight = t * Servo::velocitiesMeterPerSec.at(1);
     float distanceMiddle = (distanceLeft + distanceRight) / 2;
     float distanceDif = (distanceRight - distanceLeft) / 2 * axisLength;
+    float theta = (distanceRight - distanceLeft)/axisLength + theta_0;
+    Servo::coords.push_back(theta);
+    theta_0 = theta;
 
-    float theta = (distanceRight - distanceLeft)/axisLength + Servo::coords.at(2);
-    Servo::coords.at(2) = theta;
+    float x = distanceMiddle * cosf(Servo::coords.at(2) * distanceDif) + x_0;
+    Servo::coords.push_back(x);
+    x_0 = x;
 
-    float x = distanceMiddle * cosf(Servo::coords.at(2) * distanceDif) + Servo::coords.at(0);
-    Servo::coords.at(0) = x;
-
-    float y = distanceMiddle * sinf(Servo::coords.at(2) * distanceDif) + Servo::coords.at(1);
-    Servo::coords.at(1) = y;
-
-    Servo::velocitiesMeterPerSec.clear();
+    float y = distanceMiddle * sinf(Servo::coords.at(2) * distanceDif) + y_0;
+    Servo::coords.push_back(y);
+    y_0 = y;
 }
 
 std::string GUIData() {
@@ -183,13 +184,15 @@ std::string GUIData() {
     JsonArray& sensor = root.createNestedArray("sensor");
     JsonArray& path = root.createNestedArray("path");
 
-    for (size_t i = 0; i < Sensor::sensorDataFlat.size(); i++) {
+    for (size_t i = 0; i < 40; i++) {
         sensor.add(Sensor::sensorDataFlat.at(i));
     }
-        for (size_t i = 0; i < Servo::coords.size(); i++) {
+        for (size_t i = 0; i < 3; i++) {
             path.add(Servo::coords.at(i));
         }
-
+    std::cout << root << std::endl;
+    std::cout << Sensor::sensorDataFlat.size() << std::endl << Servo::coords.size() << std::endl;
+    Servo::velocitiesMeterPerSec.clear();
     Sensor::sensorDataFlat.clear();
     Servo::coords.clear();
     root.printTo(json);

@@ -32,7 +32,16 @@ int main(int argc, char *argv[]) {
     publisher.bind("tcp://*:5555");
     fd = openPort("/dev/ttyACM0");
 
-    while (true) {
+
+    setServoVelocities(fd, 5, 5);
+    //move(fd, 10, 10, 5, publisher);
+    hold(fd);
+    while(1) {
+        requestSensorData(fd);
+        requestServoData(fd);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    /*while (true) {
         requestSensorData(fd);
         foo(fd, publisher);
         switch (Sensor::collisionSide) {
@@ -55,8 +64,7 @@ int main(int argc, char *argv[]) {
                 Sensor::collisionSide = Sensor::hasContact::none;
                 break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+    }*/
 
     return 0;
 }

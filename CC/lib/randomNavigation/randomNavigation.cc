@@ -2,13 +2,14 @@
 #include "randomNavigation.hpp"
 #include <requestHandler.hpp>
 #include <chrono>
+#include <iostream>
 
 void dataLoop(int fd, zmq::socket_t& pub) {
-    std::string json = GUIData();
-    const char* buffer = json.c_str();
     auto start = std::chrono::system_clock::now();
-    requestHandler(fd, servoRead);
-    requestHandler(fd, sensorRead);
+        requestHandler(fd, servoRead);
+        requestHandler(fd, sensorRead);
+        std::string json = GUIData();
+        const char* buffer = json.c_str();
     auto end = std::chrono::system_clock::now();
     auto dur = end - start;
     float t = dur.count();
