@@ -33,7 +33,7 @@ int openPort(char const *port) {
 }
 
 void requestHandler(int fd, int op) {
-    char byte;
+    char byte = 0;
 
     switch (op) {
         case sensorRead:
@@ -59,6 +59,14 @@ int readFromUSB(int fd, int op) {
 
     do {
         n = read(fd, buf+nbytes, bufLen-nbytes);
+        /*if (n == 0) {
+            //std::cout << "No Bytes writen..." << std::endl;
+            continue;
+        }
+        if (n == -1) {
+            //std::cout << "Something went wrong" << std::endl;
+            break;
+        }*/
         if (buf[nbytes-1] == '}') {
             buf[nbytes] = '\0';
             json = buf;
@@ -142,6 +150,7 @@ void jsonServoParser(std::string json) {
 
     servoData.push_back(root["velLeft"]);
     servoData.push_back(root["velRight"]);
+    std::cout << servoData.at(0) << " " << servoData.at(1) << std::endl;
     convertTicksToVelocities(servoData);
 }
 
@@ -206,7 +215,7 @@ std::string GUIData() {
 void writeToUSB(int fd, JsonObject& root, int bufferSize) {
     char buffer[bufferSize];
     root.printTo(buffer, bufferSize+1);
-    int n = write(fd, &buffer, bufferSize+1);
+    int n = write(fd, &buffer, sizeof buffer);
     if (n < 0) {
         std::cout << "Could not write to USB port..." << std::endl;
     }

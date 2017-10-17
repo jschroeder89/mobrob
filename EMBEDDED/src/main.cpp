@@ -1,5 +1,6 @@
 #include <DynamixelController.hpp>
 
+int count;
 void setup() {
     I2C i2c;
     Serial.begin(9600);
@@ -12,6 +13,12 @@ void setup() {
 }
 
 void loop() {
+    //count++;
+    //Serial.println(count);
+    //rxSerialEventUsb();
     requestHandler();
-    //delay(200);
+    //servoReadPcktConstructor();
+    //Serial.println("HELLO WORLD");
+    delay(50);
+    Serial.flush();
 }

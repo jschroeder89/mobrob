@@ -23,7 +23,7 @@ void foo(int fd, zmq::socket_t& pub) {
     auto start = std::chrono::system_clock::now();
 
     requestSensorData(fd);
-    requestServoData(fd);
+    //requestServoData(fd);
 
     auto end = std::chrono::system_clock::now();
     auto dur = end - start;
@@ -31,7 +31,7 @@ void foo(int fd, zmq::socket_t& pub) {
 
     getCoordinates(t);
     std::string json = GUIData();
-    //std::cout << json << std::endl;
+    std::cout << json << std::endl;
     const char* buffer = json.c_str();
     pub.send(buffer, json.size());
 }
@@ -44,17 +44,21 @@ int main(int argc, char *argv[]) {
     fd = openPort("/dev/ttyACM0");
 
 
-    setServoVelocities(fd, 5, 5);
+    //setServoVelocities(fd, 5, 5);
     //move(fd, 10, 10, 5, publisher);
-    while(1) {
+    //hold(fd);
+    while(true) {
+        //foo(fd, publisher);
+        requestServoData(fd);
+        //requestHandler(fd, servoRead);
+        //requestSensorData(fd);
+        //requestHandler(fd, sensorRead);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        foo(fd, publisher);
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        if (Sensor::collisionSide != Sensor::hasContact::none) {
+        /*if (Sensor::collisionSide != Sensor::hasContact::none) {
             break;
-        }
+        }*/
     }
-    hold(fd);
+
     /*while (true) {
         requestSensorData(fd);
         foo(fd, publisher);

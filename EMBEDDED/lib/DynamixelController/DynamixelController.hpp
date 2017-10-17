@@ -59,14 +59,14 @@ void initializeServos();
 void writeToUSB(JsonObject& root);
 void convertServoDataToJson(int* dataArray);
 void parseJsonString(String s);
-void servoWritePcktConstructor(Vector<int>* velArray);
-void servoReadPcktConstructor(int* servoPckt);
+void servoWritePcktConstructor(Vector<int>& velArray);
+void servoReadPcktConstructor();
 void writeToUART(uint8_t* servoPckt);
-void convertToReadableVelocities(Vector<int>* servoPckt);
-void readStatusPckt(uint8_t* rcvdPkt);
+void convertToReadableVelocities(uint8_t* servoPckt);
+void readStatusPckt(uint8_t* statusPckt);
 void readFromUSB();
 
 void requestHandler();
 void scanPort();
-
+void copyArray(volatile uint8_t* array);
 #endif

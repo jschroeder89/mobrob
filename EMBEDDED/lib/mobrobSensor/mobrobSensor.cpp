@@ -59,6 +59,4 @@ void convertSensorDataToJson(int sensorData[][8]) {
 
 void writeSensorDataToUSB(JsonObject& root) {
     root.printTo(Serial);
-    delay(10);
-    Serial.flush();
 }
