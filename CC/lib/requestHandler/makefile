@@ -1,7 +1,7 @@
 install: requestHandler.o libreqhandler.a export clean
 
 requestHandler.o:
-	g++ requestHandler.cc -c
+	g++ requestHandler.cc -c -std=c++11
 
 libreqhandler.a: requestHandler.o
 	ar crs libreqhandler.a requestHandler.o

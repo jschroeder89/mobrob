@@ -315,7 +315,11 @@ void convertServoDataToJson(int* dataArray) {
 }
 
 void writeToUSB(JsonObject& root) {
-    root.printTo(Serial);
+    int bufferSize = 0;
+    char buffer [bufferSize] = {0};
+    root.printTo(buffer, bufferSize+1);
+    Serial.write(buffer, sizeof buffer);
+    Serial.flush();
 }
 
 void requestHandler() {
@@ -516,6 +520,7 @@ void rxEvent( UartEvent*          event,
       Serial.println(rcvdPkt[6]);*/
       //statusPckt.push_back(id);
       //readStatusPckt(rcvdPkt);
+      //Serial.println("rxEvent");
       copyArray(rcvdPkt);
       //static int count;
       /*statusPckt.push_back(rcvdPkt[5]);

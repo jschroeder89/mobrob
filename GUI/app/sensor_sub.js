@@ -9,6 +9,7 @@ initializeSvgs();
 sock.on('message', function(message) {
     var json = JSON.parse(String(message));
     for (var i = 0; i < json.sensor.length; i++) {
+        console.log(json.sensor);
         colorizeSensorField(i, valueToHexStringColor(json.sensor[i]));
     }
 });

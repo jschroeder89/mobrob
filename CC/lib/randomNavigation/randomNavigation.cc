@@ -1,26 +1,54 @@
 //Includes
 #include "randomNavigation.hpp"
-#include <requestHandler.hpp>
 #include <chrono>
+#include <thread>
 #include <iostream>
 
-void dataLoop(int fd, zmq::socket_t& pub) {
-    auto start = std::chrono::system_clock::now();
-        requestHandler(fd, servoRead);
-        requestHandler(fd, sensorRead);
-    auto end = std::chrono::system_clock::now();
-    auto dur = end - start;
-    float t = dur.count();
-    getCoordinates(t);
-    //std::string json = GUIData();
-    //const char* buffer = json.c_str();
-    //pub.send(buffer, json.size());
+processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords) {
+    processedData data; //Struct Entity
+    std::chrono::duration<float> dur; //measured time var
+
+    //Class Entities//
+    Sensor sensor;
+    Servo servo;
+
+    auto start = std::chrono::system_clock::now(); //Start Time Measurement
+
+    //Data Processing Sensor//
+    std::string json = sensor.requestSensorDataJsonString(fd); //request sensorData
+    sensor.jsonToSensorData(json); //parse jsonString
+    data.collisionSide = sensor.detectCollisionSide(); //to be returned
+    std::vector<int> flatSensorData = sensor.flatData(); //flatten sensorData
+    sensor.~Sensor(); //destroy Entity
+    json.clear(); //clear for reuse
+
+    //Data Processing Servo//
+    json = servo.requestServoDataJsonString(fd); //request velocities
+    servo.jsonToServoData(json); //parse jsonString
+    servo.velocitiesInMeterPerSec(); //calc velocities in m/s
+    json.clear(); //clear for reuse
+
+    auto end = std::chrono::system_clock::now(); //End Time Measurement
+
+    dur = end - start; //calc Time Difference
+    float t = dur.count(); //convert Time Difference to float
+
+    std::vector<float> newCoords = servo.calculateCoords(coords, t); //calc Coords
+    data.coords = newCoords; //to be returned
+    servo.~Servo(); //destroy Entity
+
+    json = guiDataToJsonString(flatSensorData, newCoords); //construct gui json string
+
+    pub.send(&json, json.size()); //transfer guiData via ZMQ
+    return data; //return processedData struct
 }
 
+
+
 std::vector<int> rndmTurnVelocities() {
+    std::vector<int> v;
+    int n = 0, b = 0;
 	srand((int)time(0));
-	int n = 0, b = 0;
-	std::vector<int> v;
 	b = std::rand() % 2;
 	for(size_t i = 0; i < 2; ++i) {
 		n = 20 + (std::rand()) / (RAND_MAX/(100 - 20));
@@ -36,44 +64,40 @@ std::vector<int> rndmTurnVelocities() {
 
 float rndmDurations() {
 	srand(static_cast<int> (time(0)));
-	float r = 1 + static_cast<float> (std::rand()) / (static_cast<float> (RAND_MAX/2.50));
+    float r = 1 + static_cast<float> (std::rand()) / (static_cast<float> (RAND_MAX/2 - 1));
 	return r;
 }
 
-bool collisionFront() {
-    if (Sensor::collisionSide == Sensor::hasContact::frontLeft
-    || Sensor::collisionSide == Sensor::hasContact::frontRight) {
-        return true;
-    } else {
-        return false;
-    }
-}
+void wait(int fd, zmq::socket_t& pub, float waitTime) {
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<float> dur;
+    do {
+        end = std::chrono::system_clock::now();
+        //dataLoop(fd, pub);
+        dur = end - start;
+        dur.count();
 
-bool collisionRear() {
-    if (Sensor::collisionSide == Sensor::hasContact::rear) {
-        return true;
-    } else {
-        return false;
-    }
+    } while(dur.count() < waitTime);
 }
 
 void hold(int fd) {
-    setServoVelocities(fd, 0, 0);
+
 }
 
-void move(int fd, int velLeft, int velRight, float t, zmq::socket_t& pub) {
-    setServoVelocities(fd, velLeft, velRight);
+void move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float t) {
     auto start = std::chrono::system_clock::now();
     std::chrono::duration<float> dur;
     do {
         auto end = std::chrono::system_clock::now();
-        dataLoop(fd, pub);
+        //dataLoop(fd, pub);
         dur = end - start;
     } while(dur.count() < t);
 }
 
 void randomTurn(int fd, zmq::socket_t& pub) {
     float dur = rndmDurations();
-    std::vector<int> turnVelocities = rndmTurnVelocities();
-    move(fd, turnVelocities.at(0), turnVelocities.at(1), dur, pub);
+    std::vector<int> turnVelocities;
+    turnVelocities = rndmTurnVelocities();
+    move(fd, pub, turnVelocities.at(0), turnVelocities.at(1), dur);
 }

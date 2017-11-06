@@ -4,36 +4,59 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-//#include <dataHandler.hpp>
+#include <string>
 #include "requestHandler.hpp"
 
-//Sensor::hasContact Sensor::collisionSide;
-std::vector<int> Sensor::sensorDataFlat;
-std::vector<float> Servo::velocitiesMeterPerSec;
-std::vector<float> Servo::coords;
-
+/*############  Non-Class Functions  ############*/
 int openPort(char const *port) {
-    int fd = open(port, O_RDWR | O_NDELAY);
+    int fd = 0;
+    fd = open(port, O_RDWR | O_NDELAY);
         if  (fd == -1) {
             perror("Port not found");
             return -1;
         }
-        /*struct termios options;
-
-        tcgetattr(fd, &options);
-        cfsetispeed(&options, B9600);
-        cfsetospeed(&options, B9600);
-        options.c_cflag |= (CLOCAL | CREAD);
-        options.c_iflag &= ~(BRKINT|ICRNL|ISTRIP|IXON);
-        options.c_oflag = 0;
-        options.c_lflag &= ~(ECHO|ICANON|IEXTEN|ISIG);
-        tcflush( fd, TCIFLUSH );
-        tcsetattr(fd, TCSANOW, &options);*/
     return fd;
 }
 
+std::string readFromUSB(int fd) {
+    char buf[jsonBufLenLong]{0};
+    int n = 0, nbytes = 0;
+    std::string json;
+
+    do {
+        n = read(fd, buf+nbytes, jsonBufLenLong-nbytes);
+        if (buf[nbytes-1] == '}') {
+            buf[nbytes] = '\0';
+            json = buf;
+            break;
+        }
+        nbytes +=n;
+    } while(nbytes <= jsonBufLenLong);
+    size_t jsonStartPos = json.find('{');
+    json = json.erase(0, jsonStartPos);
+    size_t jsonEndPos = json.find('}');
+    json = json.erase(jsonEndPos+1, json.length());
+    //std::cout << json << '\n';
+    return json;
+}
+
+int writeToUSB(int fd, JsonObject& root) {
+    std::string json;
+    root.printTo(json);
+    int n = write(fd, &json, json.size());
+    if (n < 0) {
+        perror("Unable to write...");
+        return -1;
+    }
+    if (n == 0) {
+        perror("No bytes written...");
+        return 0;
+    }
+    return n;
+}
+
 void requestHandler(int fd, int op) {
-    char byte = 0;
+    char byte = '0';
 
     switch (op) {
         case sensorRead:
@@ -46,209 +69,157 @@ void requestHandler(int fd, int op) {
                 byte = servoWriteByte;
                 break;
     }
-    int n = write(fd, &byte, sizeof byte);
+    int n = write(fd, &byte, 1);
     if (n < 0) {
         std::cout << "No bytes writen!" << std::endl;
     }
 }
 
-int readFromUSB(int fd, int op) {
-    char buf[bufLen];
-    int n = 0, nbytes = 0;
+std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords) {
     std::string json;
-
-    do {
-        n = read(fd, buf+nbytes, bufLen-nbytes);
-        /*if (n == 0) {
-            //std::cout << "No Bytes writen..." << std::endl;
-            continue;
-        }
-        if (n == -1) {
-            //std::cout << "Something went wrong" << std::endl;
-            break;
-        }*/
-        if (buf[nbytes-1] == '}') {
-            buf[nbytes] = '\0';
-            json = buf;
-            break;
-        }
-        nbytes +=n;
-    } while(nbytes <= bufLen);
-    size_t jsonStartPos = json.find('{');
-    json = json.erase(0, jsonStartPos);
-    size_t jsonEndPos = json.find('}');
-    json = json.erase(jsonEndPos+1, json.length());
-    if (op == sensorRead) {
-        jsonSensorParser(json);
-    } else if (op == servoRead) {
-        jsonServoParser(json);
-    }
-    return 0;
-}
-
-void jsonSensorParser(std::string json) {
-    StaticJsonBuffer<jsonBufLen> jsonBuffer;
-    JsonObject& root = jsonBuffer.parseObject(json);
-    std::vector<int> FL, FR, L, R, B, flatData;
-    std::vector<std::vector<int> > sensorData;
-
-    for (size_t i = 0; i < 8; i++) {
-        FL.push_back(root["FL"][i]);
-        FR.push_back(root["FR"][i]);
-        L.push_back(root["L"][i]);
-        B.push_back(root["B"][i]);
-        R.push_back(root["R"][i]);
-    }
-    sensorData.push_back(FL);
-    sensorData.push_back(FR);
-    sensorData.push_back(L);
-    sensorData.push_back(B);
-    sensorData.push_back(R);
-
-    flatData.reserve(40);
-    flatData.insert(flatData.end(), FL.begin(), FL.end());
-    flatData.insert(flatData.end(), FR.begin(), FR.end());
-    flatData.insert(flatData.end(), L.begin(), L.end());
-    flatData.insert(flatData.end(), B.begin(), B.end());
-    flatData.insert(flatData.end(), R.begin(), R.end());
-    Sensor::sensorDataFlat = flatData;
-    detectCollisionSide(sensorData);
-}
-
-void detectCollisionSide(std::vector<std::vector<int> >& v) {
-    Sensor::collisionSide = Sensor::hasContact::none;
-
-    for (size_t i = 0; i < 5; i++) {
-        for (size_t j = 0; j < 8; j++) {
-            if (v.at(i).at(j) > collisionThreshold) {
-                switch (i) {
-                    case 0:
-                        Sensor::collisionSide = Sensor::hasContact::frontLeft;
-                        break;
-                    case 1:
-                        Sensor::collisionSide = Sensor::hasContact::frontRight;
-                        break;
-                    case 2:
-                        Sensor::collisionSide = Sensor::hasContact::left;
-                        break;
-                    case 3:
-                        Sensor::collisionSide = Sensor::hasContact::rear;
-                        break;
-                    case 4:
-                        Sensor::collisionSide = Sensor::hasContact::right;
-                        break;
-                }
-            }
-        }
-    }
-}
-
-void jsonServoParser(std::string json) {
-    StaticJsonBuffer<jsonBufLen> jsonBuffer;
-    JsonObject& root = jsonBuffer.parseObject(json);
-    std::vector<int> servoData;
-
-    servoData.push_back(root["velLeft"]);
-    servoData.push_back(root["velRight"]);
-    std::cout << servoData.at(0) << " " << servoData.at(1) << std::endl;
-    convertTicksToVelocities(servoData);
-}
-
-
-void convertTicksToVelocities(std::vector<int>& v) {
-    for (int i = 0; i < 2; i++) {
-        Servo::velocitiesMeterPerSec.push_back(
-        wheelDiameter * M_PI * revolutionsPerMinute/60 * v.at(i));
-        //std::cout << Servo::velocitiesMeterPerSec.at(i) << std::endl;
-    }
-}
-
-void getCoordinates(float t) {
-    t /= 1e6;
-    std::vector<float> coordinates;
-    static float x_0, y_0, theta_0;
-    float distanceLeft = t * Servo::velocitiesMeterPerSec.at(0);
-    float distanceRight = t * Servo::velocitiesMeterPerSec.at(1);
-    float distanceMiddle = (distanceLeft + distanceRight) / 2;
-    float distanceDif = (distanceRight - distanceLeft) / 2 * axisLength;
-
-    float theta = (distanceRight - distanceLeft)/axisLength + theta_0;
-    coordinates.push_back(theta);
-    theta_0 = theta;
-
-    float x = distanceMiddle * cosf(theta + distanceDif) + x_0;
-    coordinates.push_back(x);
-    x_0 = x;
-    //std::cout << x << std::endl;
-
-    float y = distanceMiddle * sinf(theta + distanceDif) + y_0;
-    coordinates.push_back(y);
-    y_0 = y;
-    //std::cout << y << std::endl;
-
-    Servo::coords = coordinates;
-}
-
-std::string GUIData() {
-    std::string json;
-    DynamicJsonBuffer jsonBuffer;
+    StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["message"] = "zmq";
     JsonArray& sensor = root.createNestedArray("sensor");
     JsonArray& path = root.createNestedArray("path");
 
-    for (size_t i = 0; i < 40; i++) {
-        sensor.add(Sensor::sensorDataFlat.at(i));
+    for (size_t i = 0; i < sensorData.size(); i++) {
+        sensor.add(sensorData.at(i));
     }
-        for (size_t i = 0; i < 3; i++) {
-            path.add(Servo::coords.at(i));
-        }
-
-    Servo::velocitiesMeterPerSec.clear();
-    Sensor::sensorDataFlat.clear();
-    Servo::coords.clear();
+    for (size_t i = 0; i < coords.size(); i++) {
+        path.add(coords.at(i));
+    }
     root.printTo(json);
-
     return json;
 }
 
-void writeToUSB(int fd, JsonObject& root, int bufferSize) {
-    char buffer[bufferSize];
-    root.printTo(buffer, bufferSize+1);
-    int n = write(fd, &buffer, sizeof buffer);
-    if (n < 0) {
-        std::cout << "Could not write to USB port..." << std::endl;
+/*############  Sensor Class Methods  ############*/
+Sensor::Sensor() {
+    sensorData.reserve(5);
+}
+
+Sensor::~Sensor() {
+    sensorData.clear();
+}
+
+std::string Sensor::requestSensorDataJsonString(int fd) {
+    requestHandler(fd, sensorRead);
+    std::string json = readFromUSB(fd);
+    return json;
+}
+
+void Sensor::jsonToSensorData(std::string json) {
+    StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    for (size_t i = 0; i < 8; i++) {
+        sensorData.at(0).push_back(root["FL"][i]);
+        sensorData.at(1).push_back(root["FR"][i]);
+        sensorData.at(2).push_back(root["L"][i]);
+        sensorData.at(3).push_back(root["B"][i]);
+        sensorData.at(4).push_back(root["R"][i]);
     }
 }
 
-void setVelocities(int fd, int velLeft, int velRight) {
-    convertVelocitiesToJson(fd, velLeft, velRight);
+Sensor::hasContact Sensor::detectCollisionSide() {
+    Sensor::hasContact collisionSide = Sensor::hasContact::none;
+    for (size_t i = 0; i < 5; i++) {
+        for (size_t j = 0; j < 8; j++) {
+            if (sensorData.at(i).at(j) > collisionThreshold) {
+                switch (i) {
+                    case 0:
+                        collisionSide = Sensor::hasContact::frontLeft;
+                        break;
+                    case 1:
+                        collisionSide = Sensor::hasContact::frontRight;
+                        break;
+                    case 2:
+                        collisionSide = Sensor::hasContact::left;
+                        break;
+                    case 3:
+                        collisionSide = Sensor::hasContact::rear;
+                        break;
+                    case 4:
+                        collisionSide = Sensor::hasContact::right;
+                        break;
+                }
+            }
+        }
+    }
+    return collisionSide;
 }
 
-void convertVelocitiesToJson(int fd, int velLeft, int velRight) {
-    DynamicJsonBuffer jsonBuffer;
+std::vector<int> Sensor::flatData() {
+    std::vector<int> flatData;
+    for (size_t i = 0; i < 5; i++) {
+        for (size_t j = 0; j < 8; j++) {
+            flatData.push_back(sensorData[i][j]);
+        }
+    }
+    return flatData;
+}
+
+/*############  Servo Class Methods  ############*/
+Servo::Servo() {
+
+}
+
+Servo::~Servo() {
+    velocities.clear();
+    velocitiesMeterPerSec.clear();
+}
+
+std::vector<int> Servo::setVelocities(int velLeft, int velRight) {
+    std::vector<int> velocities;
+    velocities.push_back(velLeft);
+    velocities.push_back(velRight);
+    return velocities;
+}
+
+JsonObject& Servo::velocitiesToJson(std::vector<int>& velocities) {
+    StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-
-    root["data"] = "servoVels";
-    root["velLeft"] = velLeft;
-    root["velRight"] = velRight;
-
-    int bufferSize = root.measureLength();
-
-    writeToUSB(fd, root, bufferSize);
+    root["data"] = "velocities";
+    root["velLeft"] = velocities.at(0);
+    root["velRight"] = velocities.at(1);
+    return root;
 }
 
-void requestSensorData(int fd) {
-    requestHandler(fd, sensorRead);
-    readFromUSB(fd, sensorRead);
-}
-
-void requestServoData(int fd) {
+std::string Servo::requestServoDataJsonString(int fd) {
     requestHandler(fd, servoRead);
-    readFromUSB(fd, servoRead);
+    std::string json = readFromUSB(fd);
+    return json;
 }
 
-void setServoVelocities(int fd, int velLeft, int velRight) {
-    requestHandler(fd, servoWrite);
-    setVelocities(fd, velLeft, velRight);
+void Servo::jsonToServoData(std::string json) {
+    StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    velocities.push_back(root["velLeft"]);
+    velocities.push_back(root["velRight"]);
+}
+
+void Servo::velocitiesInMeterPerSec() {
+    for (int i = 0; i < 2; i++) {
+        velocitiesMeterPerSec.push_back(
+        wheelDiameter * M_PI * revolutionsPerMinute/60 * velocities.at(i));
+    }
+}
+
+std::vector<float> Servo::calculateCoords(std::vector<float>& previousCoords, float t) {
+    std::vector<float> newCoords;
+    previousCoords.reserve(3);
+    float distanceLeft = t * velocitiesMeterPerSec.at(0);
+    float distanceRight = t * velocitiesMeterPerSec.at(1);
+    float distanceMiddle = (distanceLeft + distanceRight) / 2;
+    float distanceDif = (distanceRight - distanceLeft) / 2 * axisLength;
+
+    float theta = (distanceRight - distanceLeft)/axisLength + previousCoords.at(0);
+    newCoords.push_back(theta);
+
+    float x = distanceMiddle * cosf(theta + distanceDif) + previousCoords.at(1);
+    newCoords.push_back(x);
+
+    float y = distanceMiddle * sinf(theta + distanceDif) + previousCoords.at(2);
+    newCoords.push_back(y);
+
+    return newCoords;
 }

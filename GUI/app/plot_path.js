@@ -2,6 +2,7 @@ var trace1 = {
     x: [],
     y: [],
     mode: 'lines+markers',
+    type: 'scattergl',
     marker: {
         color: 'rgb(0, 121, 241)',
         size: 8,
@@ -16,10 +17,12 @@ var trace1 = {
 var layout = {
     title: 'Path Tracking',
     xaxis: {
-        title: 'x-Position'
+        title: 'x-Position',
+        autorange: false
     },
     yaxis: {
-        title: 'y-Position'
+        title: 'y-Position',
+        autorange: false
     },
     width: 750,
     height: 750

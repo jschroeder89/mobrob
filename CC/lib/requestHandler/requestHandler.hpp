@@ -12,8 +12,8 @@
 #define servoReadByte '2'
 #define servoWrite 3
 #define servoWriteByte '3'
-#define bufLen 2048
-#define jsonBufLen 2048
+#define jsonBufLenLong 1048
+#define jsonBufLenShort 128
 #define collisionThreshold 3000
 #define axisLength 0.15
 #define revolutionsPerMinute 0.916
@@ -21,42 +21,43 @@
 
 
 //Prototypes
+//############  Non-Class Function Prototypes  ############
 int openPort(char const *port);
-int readFromUSB(int fd);
-void requestSensorData(int fd);
-void requestServoData(int fd);
+std::string readFromUSB(int fd);
+int writeToUSB(int fd, JsonObject& root);
 void requestHandler(int fd, int op);
-void convertVelocitiesToJson(int fd, int velLeft, int velRight);
-void writeToUSB(int fd, JsonObject& root);
-void setVelocities(int fd, int velLeft, int velRight);
-void setServoVelocities(int fd, int velLeft, int velRight);
-void jsonSensorParser(std::string json);
-void jsonServoParser(std::string json);
-void detectCollisionSide(std::vector<std::vector<int> >& v);
-void copySensorVector(std::vector<int>& v);
-void convertTicksToVelocities(std::vector<int>& v);
-void getCoordinates(float t);
-std::string GUIData();
+std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords);
 
+//Classes
 class Sensor {
-    public:
-        enum class hasContact {
-            frontLeft,
-            frontRight,
-            right,
-            rear,
-            left,
-            none
-        };
-        static hasContact collisionSide;
-        static std::vector<int> sensorDataFlat;
+public:
+    Sensor();
+    ~Sensor();
+    std::string requestSensorDataJsonString(int fd);
+    void jsonToSensorData(std::string json);
+    enum class hasContact {frontLeft, frontRight, right, rear, left, none};
+    hasContact detectCollisionSide();
+    std::vector<int> flatData();
+private:
+    std::vector<std::vector<int> > sensorData;
 };
 
 class Servo {
-    public:
-        static std::vector<float> velocitiesMeterPerSec;
-        static std::vector<float> coords;
+public:
+    Servo();
+    ~Servo();
+    //Write
+    std::vector<int> setVelocities(int velLeft, int velRight);
+    JsonObject& velocitiesToJson(std::vector<int>& velocities);
+    //Read
+    std::string requestServoDataJsonString(int fd);
+    void jsonToServoData(std::string json);
+    //Coordinates
+    void velocitiesInMeterPerSec();
+    std::vector<float> calculateCoords(std::vector<float>& previousCoords, float t);
+private:
+    std::vector<int> velocities;
+    std::vector<float> velocitiesMeterPerSec;
 };
-
 
 #endif

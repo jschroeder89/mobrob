@@ -1,7 +1,7 @@
 install: randomNavigation.o librandomnav.a export clean
 
 randomNavigation.o:
-	g++ randomNavigation.cc -c
+	g++ randomNavigation.cc -c -std=c++11
 
 librandomnav.a:
 	ar crs librandomnav.a randomNavigation.o
