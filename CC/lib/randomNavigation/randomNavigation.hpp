@@ -13,13 +13,11 @@ struct processedData {
 };
 processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords);
 processedData mainProcess(int fd, zmq::socket_t& pub);
+processedData move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float t, std::vector<float>& coords);
+processedData wait(int fd, zmq::socket_t& pub, float waitTime, std::vector<float>& coords);
+processedData randomTurn(int fd, zmq::socket_t& pub, std::vector<float>& coords);
 std::vector<int> rndmTurnVelocities();
-float rndmDurations();
-bool collisionFront();
-bool collisionRear();
-void move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float t);
 void hold(int fd);
-void wait(int fd, zmq::socket_t& pub, float waitTime);
-void randomTurn(int fd, zmq::socket_t& pub);
+float rndmDurations();
 
 #endif

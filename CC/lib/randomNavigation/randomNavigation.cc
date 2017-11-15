@@ -43,8 +43,6 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
     return data; //return processedData struct
 }
 
-
-
 std::vector<int> rndmTurnVelocities() {
     std::vector<int> v;
     int n = 0, b = 0;
@@ -68,36 +66,52 @@ float rndmDurations() {
 	return r;
 }
 
-void wait(int fd, zmq::socket_t& pub, float waitTime) {
+processedData wait(int fd, zmq::socket_t& pub, float waitTime, std::vector<float>& coords) {
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
     std::chrono::duration<float> dur;
+    processedData data;
     do {
         end = std::chrono::system_clock::now();
-        //dataLoop(fd, pub);
+        data = mainProcess(fd, pub, coords);
+        coords = data.coords;
         dur = end - start;
         dur.count();
 
     } while(dur.count() < waitTime);
+    return data;
 }
 
 void hold(int fd) {
 
 }
 
-void move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float t) {
+processedData move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float t, std::vector<float>& coords) {
     auto start = std::chrono::system_clock::now();
     std::chrono::duration<float> dur;
+    processedData data;
+    //setVelocities
     do {
         auto end = std::chrono::system_clock::now();
-        //dataLoop(fd, pub);
+        data = mainProcess(fd, pub, coords);
+        coords = data.coords;
         dur = end - start;
     } while(dur.count() < t);
+    return data;
 }
 
-void randomTurn(int fd, zmq::socket_t& pub) {
-    float dur = rndmDurations();
-    std::vector<int> turnVelocities;
-    turnVelocities = rndmTurnVelocities();
-    move(fd, pub, turnVelocities.at(0), turnVelocities.at(1), dur);
+processedData randomTurn(int fd, zmq::socket_t& pub, std::vector<float>& coords) {
+    auto start = std::chrono::system_clock::now();
+    std::chrono::duration<float> dur;
+    float t = rndmDurations();
+    std::vector<int> turnVelocities = rndmTurnVelocities();
+    //setVelocities
+    processedData data;
+    do {
+        auto end = std::chrono::system_clock::now();
+        data = mainProcess(fd, pub, coords);
+        coords = data.coords;
+        dur = end - start;
+    } while(dur.count() < t);
+    return data;
 }

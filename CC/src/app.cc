@@ -17,11 +17,11 @@ processedData navigate(int fd, zmq::socket_t& pub, std::vector<float>& previousC
     } while (data.collisionSide == Sensor::hasContact::none);
 
     hold(fd);
-    wait(fd, pub, 1);
-    move(fd, pub, -25, -25, 2);
-    wait(fd, pub, 1);
-    randomTurn(fd, pub);
-    wait(fd, pub, 1);
+    data = wait(fd, pub, 1, data.coords);
+    data = move(fd, pub, -25, -25, 2, data.coords);
+    data = wait(fd, pub, 1, data.coords);
+    data = randomTurn(fd, pub, data.coords);
+    data = wait(fd, pub, 1, data.coords);
 
     return data;
 }

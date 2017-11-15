@@ -77,7 +77,8 @@ void requestHandler(int fd, int op) {
 
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords) {
     std::string json;
-    StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
+    //StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["message"] = "zmq";
     JsonArray& sensor = root.createNestedArray("sensor");
@@ -109,7 +110,8 @@ std::string Sensor::requestSensorDataJsonString(int fd) {
 }
 
 void Sensor::jsonToSensorData(std::string json) {
-    StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
+    //StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     for (size_t i = 0; i < 8; i++) {
         sensorData.at(0).push_back(root["FL"][i]);
@@ -176,7 +178,8 @@ std::vector<int> Servo::setVelocities(int velLeft, int velRight) {
 }
 
 JsonObject& Servo::velocitiesToJson(std::vector<int>& velocities) {
-    StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
+    //StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["data"] = "velocities";
     root["velLeft"] = velocities.at(0);
@@ -191,7 +194,8 @@ std::string Servo::requestServoDataJsonString(int fd) {
 }
 
 void Servo::jsonToServoData(std::string json) {
-    StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
+    //StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     velocities.push_back(root["velLeft"]);
     velocities.push_back(root["velRight"]);
