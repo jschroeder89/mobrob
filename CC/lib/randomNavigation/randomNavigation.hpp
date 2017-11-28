@@ -17,7 +17,8 @@ processedData move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float 
 processedData wait(int fd, zmq::socket_t& pub, float waitTime, std::vector<float>& coords);
 processedData randomTurn(int fd, zmq::socket_t& pub, std::vector<float>& coords);
 std::vector<int> rndmTurnVelocities();
-void hold(int fd);
 float rndmDurations();
+void setVelocities(int fd, int velLeft, int velRight);
+void hold(int fd);
 
 #endif

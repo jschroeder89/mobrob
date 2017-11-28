@@ -4,6 +4,7 @@
 #include <thread>
 #include <iostream>
 
+
 processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords) {
     processedData data; //Struct Entity
     std::chrono::duration<float> dur; //measured time var
@@ -19,7 +20,6 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
     sensor.jsonToSensorData(json); //parse jsonString
     data.collisionSide = sensor.detectCollisionSide(); //to be returned
     std::vector<int> flatSensorData = sensor.flatData(); //flatten sensorData
-    sensor.~Sensor(); //destroy Entity
     json.clear(); //clear for reuse
 
     //Data Processing Servo//
@@ -35,12 +35,20 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
 
     std::vector<float> newCoords = servo.calculateCoords(coords, t); //calc Coords
     data.coords = newCoords; //to be returned
-    servo.~Servo(); //destroy Entity
 
     json = guiDataToJsonString(flatSensorData, newCoords); //construct gui json string
 
     pub.send(&json, json.size()); //transfer guiData via ZMQ
     return data; //return processedData struct
+}
+
+void setVelocities(int fd, int velLeft, int velRight) {
+    Servo servo;
+    std::vector<int> velocities;
+    velocities.push_back(velLeft);
+    velocities.push_back(velRight);
+    requestHandler(fd, servoWrite);
+    writeToUSB(fd, servo.velocitiesToJson(velocities));
 }
 
 std::vector<int> rndmTurnVelocities() {
@@ -83,14 +91,14 @@ processedData wait(int fd, zmq::socket_t& pub, float waitTime, std::vector<float
 }
 
 void hold(int fd) {
-
+    setVelocities(fd, 0, 0);
 }
 
 processedData move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float t, std::vector<float>& coords) {
     auto start = std::chrono::system_clock::now();
     std::chrono::duration<float> dur;
     processedData data;
-    //setVelocities
+    setVelocities(fd, velLeft, velRight);
     do {
         auto end = std::chrono::system_clock::now();
         data = mainProcess(fd, pub, coords);
@@ -105,7 +113,7 @@ processedData randomTurn(int fd, zmq::socket_t& pub, std::vector<float>& coords)
     std::chrono::duration<float> dur;
     float t = rndmDurations();
     std::vector<int> turnVelocities = rndmTurnVelocities();
-    //setVelocities
+    setVelocities(fd, turnVelocities.at(0), turnVelocities.at(1));
     processedData data;
     do {
         auto end = std::chrono::system_clock::now();

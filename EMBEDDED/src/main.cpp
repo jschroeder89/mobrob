@@ -15,5 +15,5 @@ void loop() {
     //rxSerialEventUsb();
     requestHandler();
     delay(30);
-    Serial.flush();
+    //Serial.flush();
 }

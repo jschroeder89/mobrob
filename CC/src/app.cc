@@ -6,7 +6,7 @@
 #include <thread>
 
 
-processedData navigate(int fd, zmq::socket_t& pub, std::vector<float> previousCoords);
+processedData navigate(int fd, zmq::socket_t& pub, std::vector<float>& previousCoords);
 void capture();
 
 processedData navigate(int fd, zmq::socket_t& pub, std::vector<float>& previousCoords) {
@@ -30,6 +30,26 @@ void capture() {
 
 }
 
+void sensorTest(int fd) {
+    processedData data;
+    Sensor sensor;
+    std::string json = sensor.requestSensorDataJsonString(fd); //request sensorData
+    sensor.jsonToSensorData(json); //parse jsonString
+    data.collisionSide = sensor.detectCollisionSide(); //to be returned
+    std::vector<int> flatSensorData = sensor.flatData(); //flatten sensorData
+    json.clear(); //clear for reuse
+}
+
+void servoTest(int fd) {
+    processedData data;
+    Servo servo;
+    std::string json = servo.requestServoDataJsonString(fd); //request velocities
+    servo.jsonToServoData(json); //parse jsonString
+    servo.velocitiesInMeterPerSec(); //calc velocities in m/s
+    std::cout << json << '\n';
+    json.clear(); //clear for reuse
+}
+
 int main(int argc, char *argv[]) {
     int fd = 0;
     std::vector<float> coords;
@@ -38,9 +58,9 @@ int main(int argc, char *argv[]) {
     zmq::socket_t pub(context, ZMQ_PUB);
     pub.bind("tcp://*:5555");
     fd = openPort("/dev/ttyACM0");
-
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        sensorTest(fd);
     }
 
     return 0;

@@ -50,7 +50,6 @@ volatile bool scanMode=false;
 
 void scanPort() {
     scanMode = true;
-
     for (int i=0;i<254;i++){
         idMap[i]=0;
     }
@@ -113,8 +112,6 @@ void initializeServos() {
     writeToUART(setCcwAngleLimit_2);
     writeToUART(setCwAngleLimit_1);
     writeToUART(setCwAngleLimit_2);
-
-
 }
 
 void initializeUART() {
@@ -144,7 +141,7 @@ void initializeUART() {
 }
 
 void readFromUSB() {
-    byte idx = 0;
+    char idx = 0;
     static boolean inProgress = false;
     static boolean newData = false;
     char  c;
@@ -154,6 +151,7 @@ void readFromUSB() {
     while (Serial.available() > 0 && newData == false) {
         delay(5);
         c = Serial.read();
+        Serial.println(c);
         if (inProgress == true) {
             if (c != '}') {
                 buf[idx] = c;
@@ -295,9 +293,7 @@ void servoWritePcktConstructor(Vector<int>& velArray) {
 
 void parseJsonString(String s) {
     Vector<int> velVec;
-    StaticJsonBuffer<jsonBufLen> jsonBuffer;
-    Serial.println(s);
-
+    DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(s);
     velVec.push_back(root["velLeft"]);
     velVec.push_back(root["velRight"]);
@@ -306,7 +302,7 @@ void parseJsonString(String s) {
 }
 
 void convertServoDataToJson(int* dataArray) {
-    StaticJsonBuffer<jsonBufLen> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["data"] = "servo";
     root["velLeft"] = dataArray[0];
@@ -315,16 +311,16 @@ void convertServoDataToJson(int* dataArray) {
 }
 
 void writeToUSB(JsonObject& root) {
-    int bufferSize = 0;
-    char buffer [bufferSize] = {0};
-    root.printTo(buffer, bufferSize+1);
+    size_t bufferSize = 0;
+    char buffer[bufferSize];
+    root.printTo(buffer, bufferSize);
     Serial.write(buffer, sizeof buffer);
     Serial.flush();
 }
 
 void requestHandler() {
     while (Serial.available() > 0) {
-        byte requestByte;
+        char requestByte;
         requestByte = Serial.read();
         switch (requestByte) {
             case sensorReadByte:
@@ -510,9 +506,6 @@ void rxEvent( UartEvent*          event,
         idMap[rcvdPkt[2]]=uartInt;
     }else if (usbMode){
         //Serial.println("Sending back this Message to USB :");
-        for (int i=0;i<(*posInArray);i++){
-         // Serial.println(rcvdPkt[i]);
-        }
       }
 
       /*Serial.println(rcvdPkt[2]);
@@ -524,10 +517,7 @@ void rxEvent( UartEvent*          event,
       copyArray(rcvdPkt);
       //static int count;
       /*statusPckt.push_back(rcvdPkt[5]);
-      statusPckt.push_back(rcvdPkt[6]);
-      for (size_t i = 0; i < 3; i++) {
-          Serial.println(statusPckt.at(i));
-      }*/
+      statusPckt.push_back(rcvdPkt[6]);*/
       //count++;
       //Serial.println(count);
       //statusPckt.clear();

@@ -19,12 +19,13 @@ int openPort(char const *port) {
 }
 
 std::string readFromUSB(int fd) {
-    char buf[jsonBufLenLong]{0};
+    char buf[jsonBufLenLong];
     int n = 0, nbytes = 0;
     std::string json;
 
     do {
         n = read(fd, buf+nbytes, jsonBufLenLong-nbytes);
+        //std::cout << buf[n] << '\n';
         if (buf[nbytes-1] == '}') {
             buf[nbytes] = '\0';
             json = buf;
@@ -32,11 +33,10 @@ std::string readFromUSB(int fd) {
         }
         nbytes +=n;
     } while(nbytes <= jsonBufLenLong);
-    size_t jsonStartPos = json.find('{');
+    /*size_t jsonStartPos = json.find('{');
     json = json.erase(0, jsonStartPos);
     size_t jsonEndPos = json.find('}');
-    json = json.erase(jsonEndPos+1, json.length());
-    //std::cout << json << '\n';
+    json = json.erase(jsonEndPos+1, json.length());*/
     return json;
 }
 
@@ -78,7 +78,6 @@ void requestHandler(int fd, int op) {
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords) {
     std::string json;
     DynamicJsonBuffer jsonBuffer;
-    //StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["message"] = "zmq";
     JsonArray& sensor = root.createNestedArray("sensor");
@@ -96,7 +95,10 @@ std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>
 
 /*############  Sensor Class Methods  ############*/
 Sensor::Sensor() {
-    sensorData.reserve(5);
+    std::vector<int> temp;
+    for (size_t i = 0; i < 5; i++) {
+        sensorData.push_back(temp);
+    }
 }
 
 Sensor::~Sensor() {
@@ -111,7 +113,6 @@ std::string Sensor::requestSensorDataJsonString(int fd) {
 
 void Sensor::jsonToSensorData(std::string json) {
     DynamicJsonBuffer jsonBuffer;
-    //StaticJsonBuffer<jsonBufLenLong> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     for (size_t i = 0; i < 8; i++) {
         sensorData.at(0).push_back(root["FL"][i]);
@@ -155,6 +156,7 @@ std::vector<int> Sensor::flatData() {
     for (size_t i = 0; i < 5; i++) {
         for (size_t j = 0; j < 8; j++) {
             flatData.push_back(sensorData[i][j]);
+            std::cout << sensorData[i][j] << '\n';
         }
     }
     return flatData;
@@ -170,16 +172,8 @@ Servo::~Servo() {
     velocitiesMeterPerSec.clear();
 }
 
-std::vector<int> Servo::setVelocities(int velLeft, int velRight) {
-    std::vector<int> velocities;
-    velocities.push_back(velLeft);
-    velocities.push_back(velRight);
-    return velocities;
-}
-
 JsonObject& Servo::velocitiesToJson(std::vector<int>& velocities) {
     DynamicJsonBuffer jsonBuffer;
-    //StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["data"] = "velocities";
     root["velLeft"] = velocities.at(0);
@@ -190,12 +184,12 @@ JsonObject& Servo::velocitiesToJson(std::vector<int>& velocities) {
 std::string Servo::requestServoDataJsonString(int fd) {
     requestHandler(fd, servoRead);
     std::string json = readFromUSB(fd);
+    std::cout << json << '\n';
     return json;
 }
 
 void Servo::jsonToServoData(std::string json) {
     DynamicJsonBuffer jsonBuffer;
-    //StaticJsonBuffer<jsonBufLenShort> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     velocities.push_back(root["velLeft"]);
     velocities.push_back(root["velRight"]);

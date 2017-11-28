@@ -47,7 +47,6 @@ public:
     Servo();
     ~Servo();
     //Write
-    std::vector<int> setVelocities(int velLeft, int velRight);
     JsonObject& velocitiesToJson(std::vector<int>& velocities);
     //Read
     std::string requestServoDataJsonString(int fd);
