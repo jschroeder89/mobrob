@@ -14,6 +14,7 @@
 #define servoWriteByte '3'
 #define jsonBufLenLong 1048
 #define jsonBufLenShort 128
+#define bufLen 256
 #define collisionThreshold 3000
 #define axisLength 0.15
 #define revolutionsPerMinute 0.916
@@ -27,7 +28,8 @@ std::string readFromUSB(int fd);
 int writeToUSB(int fd, JsonObject& root);
 void requestHandler(int fd, int op);
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords);
-
+int readPort(int fd);
+int bar(int fd);
 //Classes
 class Sensor {
 public:

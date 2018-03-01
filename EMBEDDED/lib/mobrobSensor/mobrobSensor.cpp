@@ -2,7 +2,7 @@
 
 void I2C::initializeI2C() {
     //Serial.println(F_BUS/20);
-    Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_1800);
+    Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, I2C_RATE_400);
     //Serial.println("I2C Initialization complete!");
 }
 
@@ -59,4 +59,5 @@ void convertSensorDataToJson(int sensorData[][8]) {
 
 void writeSensorDataToUSB(JsonObject& root) {
     root.printTo(Serial);
+    Serial.print('\n');
 }

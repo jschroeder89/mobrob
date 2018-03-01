@@ -137,11 +137,11 @@ void initializeUART() {
     delay(4000);
     scanPort();
     delay(2000);
-    Serial.println("UART Initialization complete!");
+    //Serial.println("UART Initialization complete!");
 }
 
 void readFromUSB() {
-    char idx = 0;
+    int idx = 0;
     static boolean inProgress = false;
     static boolean newData = false;
     char  c;
@@ -149,9 +149,8 @@ void readFromUSB() {
     String s;
     delay(10);
     while (Serial.available() > 0 && newData == false) {
-        delay(5);
         c = Serial.read();
-        Serial.println(c);
+        delay(1);
         if (inProgress == true) {
             if (c != '}') {
                 buf[idx] = c;
@@ -305,16 +304,16 @@ void convertServoDataToJson(int* dataArray) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["data"] = "servo";
-    root["velLeft"] = dataArray[0];
-    root["velRight"] = dataArray[1];
-    writeToUSB(root);
+    if (dataArray[0] && dataArray[1] < 1024) {
+        root["velLeft"] = dataArray[0];
+        root["velRight"] = dataArray[1];
+        writeToUSB(root);
+    }
 }
 
 void writeToUSB(JsonObject& root) {
-    size_t bufferSize = 0;
-    char buffer[bufferSize];
-    root.printTo(buffer, bufferSize);
-    Serial.write(buffer, sizeof buffer);
+    root.printTo(Serial);
+    Serial.print('\n');
     Serial.flush();
 }
 
@@ -324,7 +323,8 @@ void requestHandler() {
         requestByte = Serial.read();
         switch (requestByte) {
             case sensorReadByte:
-                readSensorData();
+                //readSensorData();
+                Serial.println("{HELLOWORLD}");
                 break;
             case servoReadByte:
                 servoReadPcktConstructor();
@@ -461,7 +461,6 @@ void copyArray(volatile uint8_t* array) {
     if (testArray[0] != 0 && testArray[0] < 3) {
         convertToReadableVelocities(testArray);
     }
-
 }
 
 void rxEvent( UartEvent*          event,

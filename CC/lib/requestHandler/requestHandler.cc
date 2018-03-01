@@ -6,16 +6,76 @@
 #include <math.h>
 #include <string>
 #include "requestHandler.hpp"
+#include <chrono>
+#include <thread>
+
 
 /*############  Non-Class Functions  ############*/
 int openPort(char const *port) {
     int fd = 0;
-    fd = open(port, O_RDWR | O_NDELAY);
-        if  (fd == -1) {
-            perror("Port not found");
-            return -1;
-        }
+    struct termios newtio, oldtio;
+    fd = open(port, O_RDWR);
+    if  (fd == -1) {
+        perror("Port not found");
+        return -1;
+    }
+
+    //tcgetattr(fd, &oldtio);
+    //newtio.c_cflag = 9600 | CRTSCTS | CLOCAL;
+    //newtio.c_iflag = IGNPAR;
+    //newtio.c_oflag = 0;
+    //newtio.c_lflag = 0;
+    //newtio.c_cc[VTIME] = 0;
+    //newtio.c_cc[VMIN] = 30;
+    //tcflush(fd, TCIFLUSH);
+    //tcsetattr(fd,TCSANOW,&newtio);
     return fd;
+}
+
+int bar(int fd) {
+    char buf[30];
+    int numread, nbytes = 0;
+    int returnval;
+
+    while (numread < nbytes - 1) {
+        returnval = read(fd, buf + numread, numread);
+        std::cout << returnval << '\n';
+        if ((returnval == -1) && (errno == EINTR))
+            continue;
+        if ( (returnval == 0) && (numread == 0) )
+            return 0;
+        if (returnval == 0)
+            break;
+        if (returnval == -1)
+            return -1;
+        numread++;
+        if (buf[numread-1] == '\n') {
+            buf[numread] = '\0';
+            return numread;
+        }
+    }
+    errno = EINVAL;
+    return -1;
+}
+
+std::string serialRead(int fd) {
+    char buf[jsonBufLenLong];
+    int n = 0, nbytes = 0;
+    std::string json;
+
+    n = read(fd, buf, jsonBufLenLong);
+    buf[jsonBufLenLong-1] = '\0';
+    json = buf;
+    if (n >= 0) {
+        std::cout << "No Bytes read!" << '\n';
+        return "";
+    }
+    size_t jsonStartPos = json.find('{');
+    json = json.erase(0, jsonStartPos);
+    size_t jsonEndPos = json.find('}');
+    json = json.erase(jsonEndPos+1, json.length());
+
+    return json;
 }
 
 std::string readFromUSB(int fd) {
@@ -23,20 +83,26 @@ std::string readFromUSB(int fd) {
     int n = 0, nbytes = 0;
     std::string json;
 
-    do {
-        n = read(fd, buf+nbytes, jsonBufLenLong-nbytes);
-        //std::cout << buf[n] << '\n';
-        if (buf[nbytes-1] == '}') {
+    //do {
+    
+        n = read(fd, buf, jsonBufLenLong);
+        //buf[nbytes+1] = '\0';
+        //std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        buf[jsonBufLenLong-1] = '\0';
+        json = buf;
+        /*if (buf[n] == '}') {
             buf[nbytes] = '\0';
             json = buf;
+            std::cout << json << '\n';
             break;
         }
-        nbytes +=n;
-    } while(nbytes <= jsonBufLenLong);
-    /*size_t jsonStartPos = json.find('{');
+        nbytes = n + nbytes;
+    } while(nbytes <= 100);
+    */
+    size_t jsonStartPos = json.find('{');
     json = json.erase(0, jsonStartPos);
     size_t jsonEndPos = json.find('}');
-    json = json.erase(jsonEndPos+1, json.length());*/
+    json = json.erase(jsonEndPos+1, json.length());
     return json;
 }
 
@@ -70,10 +136,12 @@ void requestHandler(int fd, int op) {
                 break;
     }
     int n = write(fd, &byte, 1);
+    //std::cout << byte << '\n';
     if (n < 0) {
         std::cout << "No bytes writen!" << std::endl;
     }
 }
+
 
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords) {
     std::string json;
