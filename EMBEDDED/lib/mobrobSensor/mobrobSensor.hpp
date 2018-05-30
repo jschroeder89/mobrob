@@ -32,7 +32,7 @@
 
 void readSensorData();
 void convertSensorDataToJson(int sensorData[][8]);
-void writeSensorDataToUSB(JsonObject& root);
+void writeSensorDataToUSB(JsonArray& sensorArray, JsonArray& arrayLen);
 
 class I2C {
     public:

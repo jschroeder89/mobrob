@@ -147,7 +147,6 @@ void readFromUSB() {
     char  c;
     char buf[bufLen];
     String s;
-    delay(10);
     while (Serial.available() > 0 && newData == false) {
         c = Serial.read();
         delay(1);
@@ -302,19 +301,23 @@ void parseJsonString(String s) {
 
 void convertServoDataToJson(int* dataArray) {
     DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
-    root["data"] = "servo";
-    if (dataArray[0] && dataArray[1] < 1024) {
-        root["velLeft"] = dataArray[0];
-        root["velRight"] = dataArray[1];
-        writeToUSB(root);
+    DynamicJsonBuffer lenBuffer;
+    //JsonObject& root = jsonBuffer.createObject();
+    JsonArray& velArray = jsonBuffer.createArray();
+    JsonArray& arrayLen = jsonBuffer.createArray();
+    if (dataArray[0] && dataArray[1] <= 1024) {
+        for(size_t i = 0; i < 2; i++) velArray.add(dataArray[i]);
+    int len = velArray.measureLength();
+    arrayLen.add(len);
+    writeToUSB(velArray, arrayLen);    
+
     }
 }
 
-void writeToUSB(JsonObject& root) {
-    root.printTo(Serial);
+void writeToUSB(JsonArray& velArray, JsonArray& arrayLen) {
+    arrayLen.printTo(Serial);
+    velArray.printTo(Serial);
     Serial.print('\n');
-    Serial.flush();
 }
 
 void requestHandler() {
@@ -323,8 +326,7 @@ void requestHandler() {
         requestByte = Serial.read();
         switch (requestByte) {
             case sensorReadByte:
-                //readSensorData();
-                Serial.println("{HELLOWORLD}");
+                readSensorData();
                 break;
             case servoReadByte:
                 servoReadPcktConstructor();

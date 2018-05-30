@@ -56,7 +56,7 @@ void initializeUART();
 
 void initializeServos();
 
-void writeToUSB(JsonObject& root);
+void writeToUSB(JsonArray& velArray, JsonArray& arrayLen);
 void convertServoDataToJson(int* dataArray);
 void parseJsonString(String s);
 void servoWritePcktConstructor(Vector<int>& velArray);
@@ -69,4 +69,5 @@ void readFromUSB();
 void requestHandler();
 void scanPort();
 void copyArray(volatile uint8_t* array);
+
 #endif

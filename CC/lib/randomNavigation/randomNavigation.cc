@@ -17,9 +17,9 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
 
     //Data Processing Sensor//
     std::string json = sensor.requestSensorDataJsonString(fd); //request sensorData
-    sensor.jsonToSensorData(json); //parse jsonString
+    std::vector<int> flatVec = sensor.jsonToSensorData(json); //parse jsonString
     data.collisionSide = sensor.detectCollisionSide(); //to be returned
-    std::vector<int> flatSensorData = sensor.flatData(); //flatten sensorData
+    //std::vector<int> flatSensorData = sensor. //flatten sensorData
     json.clear(); //clear for reuse
 
     //Data Processing Servo//
@@ -36,7 +36,7 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
     std::vector<float> newCoords = servo.calculateCoords(coords, t); //calc Coords
     data.coords = newCoords; //to be returned
 
-    json = guiDataToJsonString(flatSensorData, newCoords); //construct gui json string
+    json = guiDataToJsonString(flatVec, newCoords); //construct gui json string
 
     pub.send(&json, json.size()); //transfer guiData via ZMQ
     return data; //return processedData struct
@@ -47,8 +47,8 @@ void setVelocities(int fd, int velLeft, int velRight) {
     std::vector<int> velocities;
     velocities.push_back(velLeft);
     velocities.push_back(velRight);
-    requestHandler(fd, servoWrite);
-    writeToUSB(fd, servo.velocitiesToJson(velocities));
+    servo.requestHandler(fd, servoWrite);
+    servo.writeToSerial(fd, servo.velocitiesToJson(velocities));
 }
 
 std::vector<int> rndmTurnVelocities() {

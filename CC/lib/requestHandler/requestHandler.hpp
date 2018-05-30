@@ -23,28 +23,36 @@
 
 //Prototypes
 //############  Non-Class Function Prototypes  ############
-int openPort(char const *port);
-std::string readFromUSB(int fd);
-int writeToUSB(int fd, JsonObject& root);
-void requestHandler(int fd, int op);
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords);
-int readPort(int fd);
-int bar(int fd);
+
 //Classes
-class Sensor {
+
+class Serial {
+public:
+    Serial();
+    ~Serial();
+    int openPort(char const *port);
+    int getArrayLen(int fd);
+    int writeToSerial(int fd, JsonObject& root);
+    void requestHandler(int fd, int op);
+    std::string serialRead(int fd);
+protected:
+    int fd;
+};
+
+class Sensor : public Serial {
 public:
     Sensor();
     ~Sensor();
     std::string requestSensorDataJsonString(int fd);
-    void jsonToSensorData(std::string json);
+    std::vector<int> jsonToSensorData(std::string json);
     enum class hasContact {frontLeft, frontRight, right, rear, left, none};
     hasContact detectCollisionSide();
-    std::vector<int> flatData();
 private:
     std::vector<std::vector<int> > sensorData;
 };
 
-class Servo {
+class Servo : public Serial {
 public:
     Servo();
     ~Servo();

@@ -37,27 +37,21 @@ int I2C::getI2CSensorData(int add, int ch) {
 }
 
 void convertSensorDataToJson(int sensorData[][8]) {
-    StaticJsonBuffer<jsonStringLen> jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
-    root["data"] = "sensor";
-    JsonArray& sensorFrontLeft = root.createNestedArray("FL");
-    JsonArray& sensorFrontRight = root.createNestedArray("FR");
-    JsonArray& sensorRight = root.createNestedArray("R");
-    JsonArray& sensorLeft = root.createNestedArray("L");
-    JsonArray& sensorBack = root.createNestedArray("B");
-
-
-    for (int j = 0; j < 8; j++) {
-        sensorFrontLeft.add(sensorData[0][j]);
-        sensorFrontRight.add(sensorData[1][j]);
-        sensorLeft.add(sensorData[4][j]);
-        sensorBack.add(sensorData[3][j]);
-        sensorRight.add(sensorData[2][j]);
+    DynamicJsonBuffer jsonBuffer, lenBuffer;
+    JsonArray& sensorArray = jsonBuffer.createArray();
+    JsonArray& arrayLen = lenBuffer.createArray();
+    for (size_t j = 0; j < 5; j++) {
+        for (size_t i = 0; i < 8; i++) {
+            sensorArray.add(sensorData[j][i]);
+        }
     }
-    writeSensorDataToUSB(root);
+    size_t bufferLen = sensorArray.measureLength();
+    arrayLen.add(bufferLen);
+    writeSensorDataToUSB(sensorArray, arrayLen);
 }
 
-void writeSensorDataToUSB(JsonObject& root) {
-    root.printTo(Serial);
+void writeSensorDataToUSB(JsonArray& sensorArray, JsonArray& arrayLen) {
+    arrayLen.printTo(Serial);
+    sensorArray.printTo(Serial);
     Serial.print('\n');
 }
