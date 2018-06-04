@@ -35,7 +35,6 @@ void capture() {
 
 processedData sensorTest(processedData& data) {
     Sensor sensor;
-    sensor.requestHandler(data.fd, sensorRead);
     std::string json = sensor.requestSensorDataJsonString(data.fd); //request sensorData
     std::cout << json << '\n';
     std::vector<int> flatSensorData = sensor.jsonToSensorData(json); //parse jsonString
@@ -43,33 +42,32 @@ processedData sensorTest(processedData& data) {
     return data;
 }
 
-void servoTest(int fd) {
-    processedData data;
+processedData servoTest(processedData& data) {
     Servo servo;
-    std::string json = servo.requestServoDataJsonString(fd); //request velocities
+    std::string json = servo.requestServoDataJsonString(data.fd); //request velocities
     servo.jsonToServoData(json); //parse jsonString
     servo.velocitiesInMeterPerSec(); //calc velocities in m/s
     std::cout << json << '\n';
-    //json.clear(); //clear for reuse
+    return data;
 }
 
 int main(int argc, char *argv[]) {
-    Serial serial;
     processedData data;
     std::vector<float> coords(3);
     zmq::context_t context (1);
     zmq::socket_t pub(context, ZMQ_PUB);
     pub.bind("tcp://*:5555");
-    data.fd = serial.openPort("/dev/ttyACM0");
+    int fd = openPort("/dev/ttyACM0");
     data.coords = coords;
     data.collisionSide = Sensor::hasContact::none; 
     std::string json;
     
     while (true) {
-        sensorTest(data);
+        //data = sensorTest(data);
+        requestHandler(fd, sensorRead);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        //json = serial.serialRead();
-        //std::cout << json << '\n';
+        json = serialRead(fd);
+        std::cout << json << '\n';
     }
 
     return 0;

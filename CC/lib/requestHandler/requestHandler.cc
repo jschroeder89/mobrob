@@ -10,18 +10,11 @@
 #include <thread>
 
 
-/*############  Serial Class  ############*/
-Serial::Serial(){
-    this->fd = 0;
-}
-
-Serial::~Serial(){}
-
-int Serial::openPort(char const *port) {
+int openPort(char const *port) {
     //int fd = 0;
     struct termios newtio, oldtio;
-    this->fd = open(port, O_RDWR);
-    if  (this->fd == -1) {
+    int fd = open(port, O_RDWR);
+    if  (fd == -1) {
         perror("Port not found");
         return -1;
     }
@@ -35,10 +28,10 @@ int Serial::openPort(char const *port) {
     newtio.c_cc[VMIN] = 15;
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd,TCSANOW,&newtio);
-    return this->fd;
+    return fd;
 }
 
-int Serial::getArrayLen(int fd) {
+int getArrayLen(int fd) {
     int nbytes = 0, n = 0, bufferLen = 8;
     char buf[bufferLen];
     std::string json;
@@ -60,8 +53,8 @@ int Serial::getArrayLen(int fd) {
     return arrayLen;
 }
 
-std::string Serial::serialRead(int fd) {
-    int n = 0, nbytes = 0, bufferLen = this->getArrayLen(fd);
+std::string serialRead(int fd) {
+    int n = 0, nbytes = 0, bufferLen = getArrayLen(fd);
     char buf[bufferLen];
     std::string json;
     do {
@@ -78,7 +71,7 @@ std::string Serial::serialRead(int fd) {
     return json;
 }
 
-int Serial::writeToSerial(int fd, JsonObject& root) {
+int writeToSerial(int fd, JsonObject& root) {
     std::string json;
     root.printTo(json);
     int n = write(fd, &json, json.size());
@@ -93,7 +86,7 @@ int Serial::writeToSerial(int fd, JsonObject& root) {
     return n;
 }
 
-void Serial::requestHandler(int fd, int op) {
+void requestHandler(int fd, int op) {
     char byte = '0';
 
     switch (op) {
@@ -129,32 +122,33 @@ Sensor::~Sensor() {
 }
 
 std::string Sensor::requestSensorDataJsonString(int fd) {
-    this->requestHandler(fd, sensorRead);
-    std::string json = this->serialRead(fd);
+    requestHandler(fd, sensorRead);
+    std::string json = serialRead(fd);
     return json;
 }
 
 std::vector<int> Sensor::jsonToSensorData(std::string json) {
+    int i = 0;
     DynamicJsonBuffer jsonBuffer;
     std::vector<int> flatVec;
     JsonArray& jsonSensorArray = jsonBuffer.parseArray(json);
-	for	(int i=0; i<8; i++) {
+	for	(i=0; i<8; i++) {
 		this->sensorData.at(0).push_back(jsonSensorArray[i]);
 		flatVec.push_back(jsonSensorArray[i]);
 	}
-	for	(int i=8; i<16; i++) {
+	for	(i=8; i<16; i++) {
 			this->sensorData.at(1).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
-	for	(int i=16; i<24; i++) {
+	for	(i=16; i<24; i++) {
 			this->sensorData.at(2).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
-	for	(int i=24; i<32; i++) {
+	for	(i=24; i<32; i++) {
 			this->sensorData.at(3).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
-	for	(int i=32; i<40; i++) {
+	for	(i=32; i<40; i++) {
 			this->sensorData.at(4).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
@@ -212,8 +206,8 @@ JsonObject& Servo::velocitiesToJson(std::vector<int>& velocities) {
 }
 
 std::string Servo::requestServoDataJsonString(int fd) {
-    this->requestHandler(fd, servoRead);
-    std::string json = this->serialRead(fd);
+    requestHandler(fd, servoRead);
+    std::string json = serialRead(fd);
     return json;
 }
 

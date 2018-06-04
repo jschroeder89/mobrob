@@ -24,23 +24,13 @@
 //Prototypes
 //############  Non-Class Function Prototypes  ############
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords);
+int openPort(char const *port);
+int getArrayLen(int fd);
+int writeToSerial(int fd, JsonObject& root);
+void requestHandler(int fd, int op);
+std::string serialRead(int fd);
 
-//Classes
-
-class Serial {
-public:
-    Serial();
-    ~Serial();
-    int openPort(char const *port);
-    int getArrayLen(int fd);
-    int writeToSerial(int fd, JsonObject& root);
-    void requestHandler(int fd, int op);
-    std::string serialRead(int fd);
-protected:
-    int fd;
-};
-
-class Sensor : public Serial {
+class Sensor {
 public:
     Sensor();
     ~Sensor();
@@ -52,7 +42,7 @@ private:
     std::vector<std::vector<int> > sensorData;
 };
 
-class Servo : public Serial {
+class Servo {
 public:
     Servo();
     ~Servo();

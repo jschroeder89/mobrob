@@ -47,8 +47,8 @@ void setVelocities(int fd, int velLeft, int velRight) {
     std::vector<int> velocities;
     velocities.push_back(velLeft);
     velocities.push_back(velRight);
-    servo.requestHandler(fd, servoWrite);
-    servo.writeToSerial(fd, servo.velocitiesToJson(velocities));
+    requestHandler(fd, servoWrite);
+    writeToSerial(fd, servo.velocitiesToJson(velocities));
 }
 
 std::vector<int> rndmTurnVelocities() {
