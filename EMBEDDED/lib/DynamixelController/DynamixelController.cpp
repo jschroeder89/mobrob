@@ -233,7 +233,6 @@ void convertToReadableVelocities(uint8_t* servoPckt) {
         velLeftIsEmpty = false;
         velRightIsEmpty = false;
 
-
         convertServoDataToJson(velArray);
     }
 }
@@ -241,7 +240,7 @@ void convertToReadableVelocities(uint8_t* servoPckt) {
 void servoReadPcktConstructor() {
     uint8_t servoPckt[8] {FF, FF, 0, _READ_LENGHT, _READ_SERVO_DATA,
         SERVO_REGISTER_PRESENT_SPEED, _NUM_OF_BYTES_TO_READ, 0};
-    for (uint8_t id = 1; id <3; id++) {
+    for (uint8_t id = 1; id < 3; id++) {
         uint8_t checkSum = 0;
         servoPckt[2] = id;
         for (size_t i = 2; i < sizeof servoPckt-1; i++) {
