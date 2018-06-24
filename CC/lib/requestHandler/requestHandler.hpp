@@ -15,7 +15,7 @@
 #define jsonBufLenLong 1048
 #define jsonBufLenShort 128
 #define bufLen 256
-#define collisionThreshold 3000
+#define collisionThreshold 2800
 #define axisLength 0.15
 #define revolutionsPerMinute 0.916
 #define wheelDiameter 0.052

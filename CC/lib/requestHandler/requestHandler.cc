@@ -25,7 +25,7 @@ int openPort(char const *port) {
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
     newtio.c_cc[VTIME] = 0;
-    newtio.c_cc[VMIN] = 15;
+    newtio.c_cc[VMIN] = 1;
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd,TCSANOW,&newtio);
     return fd;
@@ -35,8 +35,7 @@ int getArrayLen(int fd) {
     int nbytes = 0, n = 0, bufferLen = 8;
     char buf[bufferLen];
     std::string json;
-    
-    while(nbytes < bufferLen) {
+    while(nbytes <= bufferLen) {
         n = read(fd, buf+nbytes, 1);
         if (buf[nbytes] == ']') {
             buf[nbytes+1] = '\0';
@@ -46,7 +45,6 @@ int getArrayLen(int fd) {
         nbytes++;
         
     }
-
     DynamicJsonBuffer jsonBuffer;
     JsonArray& array = jsonBuffer.parse(json);
     int arrayLen = array[0];
@@ -87,20 +85,21 @@ int writeToSerial(int fd, JsonObject& root) {
 }
 
 void requestHandler(int fd, int op) {
-    char byte = '0';
-
+    char newLine[1] = {'\n'};
+    char requestByte;   
     switch (op) {
         case sensorRead:
-        byte = sensorReadByte;
-        break;
-            case servoRead:
-            byte = servoReadByte;
+            requestByte = sensorReadByte;
             break;
-                case servoWrite:
-                byte = servoWriteByte;
-                break;
+        case servoRead:
+            requestByte = servoReadByte;
+            break;
+        case servoWrite:
+            requestByte = servoWriteByte;
+            break;
     }
-    int n = write(fd, &byte, 1);
+    int n = write(fd, &requestByte, sizeof requestByte);
+    write(fd, &newLine, sizeof newLine);
     if (n <= 0) {
         std::cout << "No bytes writen!" << std::endl;
         std::cout << n << std::endl;
@@ -113,12 +112,12 @@ void requestHandler(int fd, int op) {
 Sensor::Sensor() {
     std::vector<int> temp;
     for (size_t i = 0; i < 5; i++) {
-        this->sensorData.push_back(temp);
+        sensorData.push_back(temp);
     }
 }
 
 Sensor::~Sensor() {
-    this->sensorData.clear();
+    sensorData.clear();
 }
 
 std::string Sensor::requestSensorDataJsonString(int fd) {
@@ -133,23 +132,23 @@ std::vector<int> Sensor::jsonToSensorData(std::string json) {
     std::vector<int> flatVec;
     JsonArray& jsonSensorArray = jsonBuffer.parseArray(json);
 	for	(i=0; i<8; i++) {
-		this->sensorData.at(0).push_back(jsonSensorArray[i]);
+		sensorData.at(0).push_back(jsonSensorArray[i]);
 		flatVec.push_back(jsonSensorArray[i]);
 	}
 	for	(i=8; i<16; i++) {
-			this->sensorData.at(1).push_back(jsonSensorArray[i]);
+			sensorData.at(1).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
 	for	(i=16; i<24; i++) {
-			this->sensorData.at(2).push_back(jsonSensorArray[i]);
+			sensorData.at(2).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
 	for	(i=24; i<32; i++) {
-			this->sensorData.at(3).push_back(jsonSensorArray[i]);
+			sensorData.at(3).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
 	for	(i=32; i<40; i++) {
-			this->sensorData.at(4).push_back(jsonSensorArray[i]);
+			sensorData.at(4).push_back(jsonSensorArray[i]);
 			flatVec.push_back(jsonSensorArray[i]);
 	}
     return flatVec;
@@ -159,7 +158,7 @@ Sensor::hasContact Sensor::detectCollisionSide() {
     Sensor::hasContact collisionSide = Sensor::hasContact::none;
     for (size_t i = 0; i < 5; i++) {
         for (size_t j = 0; j < 8; j++) {
-            if (this->sensorData.at(i).at(j) > collisionThreshold) {
+            if (sensorData.at(i).at(j) > collisionThreshold) {
                 switch (i) {
                     case 0:
                         collisionSide = Sensor::hasContact::frontLeft;
@@ -192,8 +191,8 @@ Sensor::hasContact Sensor::detectCollisionSide() {
 Servo::Servo() {}
 
 Servo::~Servo() {
-    this->velocities.clear();
-    this->velocitiesMeterPerSec.clear();
+    velocities.clear();
+    velocitiesMeterPerSec.clear();
 }
 
 JsonObject& Servo::velocitiesToJson(std::vector<int>& velocities) {
@@ -214,22 +213,22 @@ std::string Servo::requestServoDataJsonString(int fd) {
 void Servo::jsonToServoData(std::string json) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    this->velocities.push_back(root["velLeft"]);
-    this->velocities.push_back(root["velRight"]);
+    velocities.push_back(root["velLeft"]);
+    velocities.push_back(root["velRight"]);
 }
 
 void Servo::velocitiesInMeterPerSec() {
     for (int i = 0; i < 2; i++) {
-        this->velocitiesMeterPerSec.push_back(
-        wheelDiameter * M_PI * revolutionsPerMinute/60 * this->velocities.at(i));
+        velocitiesMeterPerSec.push_back(
+        wheelDiameter * M_PI * revolutionsPerMinute/60 * velocities.at(i));
     }
 }
 
 std::vector<float> Servo::calculateCoords(std::vector<float>& previousCoords, float t) {
     std::vector<float> newCoords;
     previousCoords.reserve(3);
-    float distanceLeft = t * this->velocitiesMeterPerSec.at(0);
-    float distanceRight = t * this->velocitiesMeterPerSec.at(1);
+    float distanceLeft = t * velocitiesMeterPerSec.at(0);
+    float distanceRight = t * velocitiesMeterPerSec.at(1);
     float distanceMiddle = (distanceLeft + distanceRight) / 2;
     float distanceDif = (distanceRight - distanceLeft) / 2 * axisLength;
 

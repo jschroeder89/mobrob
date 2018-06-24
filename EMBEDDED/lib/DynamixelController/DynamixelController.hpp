@@ -56,7 +56,7 @@ void initializeUART();
 
 void initializeServos();
 
-void writeToUSB(JsonArray& velArray, JsonArray& arrayLen);
+void writeToUSB(JsonArray& velArray);
 void convertServoDataToJson(int* dataArray);
 void parseJsonString(String s);
 void servoWritePcktConstructor(Vector<int>& velArray);

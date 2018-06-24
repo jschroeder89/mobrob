@@ -8,9 +8,9 @@
 
 //Prototypes
 struct processedData {
+    std::vector<int> sensorVec;
     Sensor::hasContact collisionSide;
     std::vector<float> coords;
-    int fd;
 };
 processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords);
 processedData mainProcess(int fd, zmq::socket_t& pub);

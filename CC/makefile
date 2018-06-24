@@ -1,3 +1,5 @@
+all: requestHandler.o libreqhandler.a randomNavigation.o librandomnav.a export clean app.o run
+
 build: requestHandler.o libreqhandler.a randomNavigation.o librandomnav.a export clean app.o
 
 requestHandler.o:
