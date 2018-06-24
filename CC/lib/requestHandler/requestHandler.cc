@@ -25,7 +25,7 @@ int openPort(char const *port) {
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
     newtio.c_cc[VTIME] = 0;
-    newtio.c_cc[VMIN] = 1;
+    newtio.c_cc[VMIN] = 3;
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd,TCSANOW,&newtio);
     return fd;
@@ -37,6 +37,8 @@ int getArrayLen(int fd) {
     std::string json;
     while(nbytes <= bufferLen) {
         n = read(fd, buf+nbytes, 1);
+        std::cout << buf << std::endl;
+
         if (buf[nbytes] == ']') {
             buf[nbytes+1] = '\0';
             json = buf;
@@ -85,8 +87,7 @@ int writeToSerial(int fd, JsonObject& root) {
 }
 
 void requestHandler(int fd, int op) {
-    char newLine[1] = {'\n'};
-    char requestByte;   
+    char requestByte = '0';   
     switch (op) {
         case sensorRead:
             requestByte = sensorReadByte;
@@ -98,8 +99,7 @@ void requestHandler(int fd, int op) {
             requestByte = servoWriteByte;
             break;
     }
-    int n = write(fd, &requestByte, sizeof requestByte);
-    write(fd, &newLine, sizeof newLine);
+    int n = write(fd, &requestByte, 1);
     if (n <= 0) {
         std::cout << "No bytes writen!" << std::endl;
         std::cout << n << std::endl;

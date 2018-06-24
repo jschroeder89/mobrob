@@ -323,20 +323,19 @@ void readVelocities() {
     n = Serial.readBytesUntil('/n', buf, 12);
     JsonArray& velArray = jsonBuffer.parseArray(buf);
     velArray.copyTo(array);
-    velVec[0] = velArray[0];
-    velVec[1] = velArray[1];
+    int velLeft = velArray[0];
+    int velRight = velArray[1];
+    Serial.println(velLeft);
+    Serial.println(velRight);
     servoWritePcktConstructor(velVec);
 }
 
 void requestHandler() {
-    char requestByte[1];
-    requestByte[0] = '0';
-    if (!Serial.available()) {
-        return;
-    }
-    //if (Serial.available() > 0 && requestByte[0] == '0') {
-        Serial.readBytes(requestByte, 1);
-        switch(requestByte[0]) {
+    char requestByte = '0';
+    while(Serial.available() > 0) {
+        //Serial.readBytes(requestByte, 1);
+        requestByte = Serial.read();
+        switch(requestByte) {
             case sensorReadByte:
                 readSensorData();
                 break;
@@ -348,7 +347,7 @@ void requestHandler() {
                 readVelocities();
                 break;
         }
-    //}
+    }
 }
 
 void rxSerialEventUsb(){

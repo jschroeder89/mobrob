@@ -1,4 +1,4 @@
-#include <unistd.h>
+  #include <unistd.h>
 #include <requestHandler.hpp>
 #include <randomNavigation.hpp>
 #include <iostream>
@@ -53,7 +53,7 @@ void servoVels(int fd, std::vector<int>& velVector){
 processedData sensorTest(int fd, processedData& data) {
     Sensor sensor;
     std::string json = sensor.requestSensorDataJsonString(fd); //request sensorData
-    //std::cout << json << '\n';
+    std::cout << json << '\n';
     std::vector<int> flatSensorData = sensor.jsonToSensorData(json); //parse jsonString
     data.collisionSide = sensor.detectCollisionSide(); //get collisionSide
     return data;
@@ -94,13 +94,15 @@ int main(int argc, char *argv[]) {
     servoVels(fd, velVector);
 
     while (true) {
+        requestHandler(fd, sensorRead);
+        requestHandler(fd, servoRead);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        data = sensorTest(fd, data);
-        data = servoTest(fd, data);
-        if (data.collisionSide != Sensor::hasContact::none) {
+        //data = sensorTest(fd, data);
+        //data = servoTest(fd, data);
+        /*if (data.collisionSide != Sensor::hasContact::none) {
             hold(fd);
             break;
-        }
+        }*/
     }
     std::cout << "DONE" << std::endl;
     return 0;
