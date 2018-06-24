@@ -1,5 +1,3 @@
-#include <fcntl.h>
-#include <termios.h>
 #include <unistd.h>
 #include <requestHandler.hpp>
 #include <randomNavigation.hpp>
@@ -90,28 +88,20 @@ int main(int argc, char *argv[]) {
     data.coords = coords;
     data.collisionSide = Sensor::hasContact::none; 
     std::string json;
-    std::vector <int> velVector{30,40};
+    std::vector <int> velVector{2,2};
     
-        requestHandler(fd, servoWrite);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        servoVels(fd, velVector);
-    //while(true){
-    //}
-    
-    /*while (true) {
+    requestHandler(fd, servoWrite);
+    servoVels(fd, velVector);
 
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         data = sensorTest(fd, data);
         data = servoTest(fd, data);
-        
-        
-        
-        
-
         if (data.collisionSide != Sensor::hasContact::none) {
             hold(fd);
             break;
         }
     }
-    std::cout << "DONE" << std::endl;*/
+    std::cout << "DONE" << std::endl;
     return 0;
 }

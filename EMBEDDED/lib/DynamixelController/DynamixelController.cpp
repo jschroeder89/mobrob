@@ -294,18 +294,12 @@ void parseJsonString(String s) {
     JsonObject& root = jsonBuffer.parseObject(s);
     velVec.push_back(root["velLeft"]);
     velVec.push_back(root["velRight"]);
-
     servoWritePcktConstructor(velVec);
 }
 
 void convertServoDataToJson(int* dataArray) {
     DynamicJsonBuffer jsonBuffer;
     JsonArray& velArray = jsonBuffer.createArray();
-    //if (dataArray[0] && dataArray[1] <= 1024) {
-    //    for(size_t i = 0; i < 2; i++) {
-    //    velArray.add(dataArray[i]);
-    //    } 
-    //}
     velArray.add(dataArray[0]);
     velArray.add(dataArray[1]);
     writeToUSB(velArray);    
@@ -323,19 +317,15 @@ void writeToUSB(JsonArray& velArray) {
 void readVelocities() {
     int n = 0;
     int array[2];
-    char buf[10];
-    //Serial.print("Serial.avaliable() :");
-    //Serial.println(Serial.available());
-    //if(Serial.available() > 0){
-    n = Serial.readBytesUntil('/n', buf, sizeof buf);
-        //n = Serial.readBytesUntil('\n', buf, sizeof buf);
-    //}
-    Serial.println(buf);
-    Serial.println(n);
+    char buf[12];
+    Vector<int> velVec(2);
     DynamicJsonBuffer jsonBuffer;
+    n = Serial.readBytesUntil('/n', buf, 12);
     JsonArray& velArray = jsonBuffer.parseArray(buf);
     velArray.copyTo(array);
-    int velLeft = velArray[0];
+    velVec[0] = velArray[0];
+    velVec[1] = velArray[1];
+    servoWritePcktConstructor(velVec);
 }
 
 void requestHandler() {
@@ -346,7 +336,6 @@ void requestHandler() {
     }
     //if (Serial.available() > 0 && requestByte[0] == '0') {
         Serial.readBytes(requestByte, 1);
-        Serial.print(requestByte);
         switch(requestByte[0]) {
             case sensorReadByte:
                 readSensorData();
