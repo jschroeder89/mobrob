@@ -25,20 +25,20 @@ int openPort(char const *port) {
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
     newtio.c_cc[VTIME] = 0;
-    newtio.c_cc[VMIN] = 3;
+    newtio.c_cc[VMIN] = 1;
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd,TCSANOW,&newtio);
     return fd;
 }
 
 int getArrayLen(int fd) {
-    int nbytes = 0, n = 0, bufferLen = 8;
+    int nbytes = 0, n = 0, bufferLen = 6;
     char buf[bufferLen];
     std::string json;
     while(nbytes <= bufferLen) {
         n = read(fd, buf+nbytes, 1);
-        std::cout << buf << std::endl;
-
+        //std::cout << n << std::endl;
+    //std::cout << "HERE" << std::endl;
         if (buf[nbytes] == ']') {
             buf[nbytes+1] = '\0';
             json = buf;
@@ -244,6 +244,20 @@ std::vector<float> Servo::calculateCoords(std::vector<float>& previousCoords, fl
     return newCoords;
 }
 
+void Servo::setServoVelocities(int fd, std::vector<int> &velVector){
+    int n = 0;
+    char buf[80];
+    DynamicJsonBuffer jsonBuffer;
+    JsonArray &velArray = jsonBuffer.createArray();
+    velArray.add(velVector[0]);
+    velArray.add(velVector[1]);
+    int len = velArray.measureLength();
+    velArray.printTo(buf);
+    n = write(fd, buf, len);
+    if (n <= 0) {
+        std::cout << "No Bytes written..." << std::endl;
+    }
+}
 //Non Class Functions
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords) {
     std::string json;

@@ -317,14 +317,18 @@ void writeToUSB(JsonArray& velArray) {
 void readVelocities() {
     int n = 0;
     int array[2];
-    char buf[12];
-    Vector<int> velVec(2);
+    char buf[20];
+    Vector<int> velVec;
     DynamicJsonBuffer jsonBuffer;
-    n = Serial.readBytesUntil('/n', buf, 12);
+    n = Serial.readBytesUntil(']', buf, sizeof buf);
+    buf[n] = ']';
     JsonArray& velArray = jsonBuffer.parseArray(buf);
     velArray.copyTo(array);
     int velLeft = velArray[0];
     int velRight = velArray[1];
+    velVec.push_back(velLeft);
+    velVec.push_back(velRight);
+    Serial.flush();
     Serial.println(velLeft);
     Serial.println(velRight);
     servoWritePcktConstructor(velVec);

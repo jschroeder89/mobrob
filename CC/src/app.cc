@@ -63,14 +63,12 @@ processedData servoTest(int fd, processedData& data) {
     Servo servo;
     std::string json = servo.requestServoDataJsonString(fd); //request velocities
     //std::cout << json << '\n';
-    servo.jsonToServoData(json); //parse jsonString
-    servo.velocitiesInMeterPerSec(); //calc velocities in m/s
-
+    //servo.jsonToServoData(json); //parse jsonString
+    //servo.velocitiesInMeterPerSec(); //calc velocities in m/s
     return data;
 }
 
 processedData componentsCheck(int fd, zmq::socket_t& pub, processedData& data) {
-    setVelocities(fd, 5, 5);
     
 
     data = sensorTest(fd, data);
@@ -89,16 +87,17 @@ int main(int argc, char *argv[]) {
     data.collisionSide = Sensor::hasContact::none; 
     std::string json;
     std::vector <int> velVector{2,2};
-    
+    Servo servo;
     requestHandler(fd, servoWrite);
-    servoVels(fd, velVector);
-
+    servo.setServoVelocities(fd, velVector);
     while (true) {
-        requestHandler(fd, sensorRead);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         requestHandler(fd, servoRead);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        requestHandler(fd, sensorRead);
         //data = sensorTest(fd, data);
-        //data = servoTest(fd, data);
+        //requestHandler(fd, servoRead);
+        //json = serialRead(fd);
+        //servoTest(fd, data);
         /*if (data.collisionSide != Sensor::hasContact::none) {
             hold(fd);
             break;
