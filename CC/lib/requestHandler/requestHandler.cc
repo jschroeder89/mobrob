@@ -32,12 +32,12 @@ int openPort(char const *port) {
 }
 
 int getArrayLen(int fd) {
-    int nbytes = 0, n = 0, bufferLen = 6;
+    int nbytes = 0, n = 0, bufferLen = 8;
     char buf[bufferLen];
     std::string json;
     while(nbytes <= bufferLen) {
         n = read(fd, buf+nbytes, 1);
-        //std::cout << n << std::endl;
+        //std::cout << buf << std::endl;
     //std::cout << "HERE" << std::endl;
         if (buf[nbytes] == ']') {
             buf[nbytes+1] = '\0';

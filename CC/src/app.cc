@@ -62,9 +62,9 @@ processedData sensorTest(int fd, processedData& data) {
 processedData servoTest(int fd, processedData& data) {
     Servo servo;
     std::string json = servo.requestServoDataJsonString(fd); //request velocities
-    //std::cout << json << '\n';
-    //servo.jsonToServoData(json); //parse jsonString
-    //servo.velocitiesInMeterPerSec(); //calc velocities in m/s
+    std::cout << json << '\n';
+    servo.jsonToServoData(json); //parse jsonString
+    servo.velocitiesInMeterPerSec(); //calc velocities in m/s
     return data;
 }
 
@@ -86,18 +86,22 @@ int main(int argc, char *argv[]) {
     data.coords = coords;
     data.collisionSide = Sensor::hasContact::none; 
     std::string json;
-    std::vector <int> velVector{2,2};
+    std::vector <int> velVector{0,0};
     Servo servo;
     requestHandler(fd, servoWrite);
     servo.setServoVelocities(fd, velVector);
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         requestHandler(fd, servoRead);
+        json = serialRead(fd);
+        std::cout << json << std::endl;
         requestHandler(fd, sensorRead);
+        json = serialRead(fd);
+        std::cout << json << std::endl; 
         //data = sensorTest(fd, data);
         //requestHandler(fd, servoRead);
-        //json = serialRead(fd);
-        //servoTest(fd, data);
+        //json = serialRead(fd);  3
+        //data = servoTest(fd, data);
         /*if (data.collisionSide != Sensor::hasContact::none) {
             hold(fd);
             break;

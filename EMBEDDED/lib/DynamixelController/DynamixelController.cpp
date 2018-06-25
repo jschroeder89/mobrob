@@ -329,8 +329,6 @@ void readVelocities() {
     velVec.push_back(velLeft);
     velVec.push_back(velRight);
     Serial.flush();
-    Serial.println(velLeft);
-    Serial.println(velRight);
     servoWritePcktConstructor(velVec);
 }
 
