@@ -86,7 +86,8 @@ int main(int argc, char *argv[]) {
     data.coords = coords;
     data.collisionSide = Sensor::hasContact::none; 
     std::string json;
-    std::vector <int> velVector{0,0};
+    std::vector <int> velVector{2,2};
+    std::vector <int> holdVector{0,0};
     Servo servo;
     requestHandler(fd, servoWrite);
     servo.setServoVelocities(fd, velVector);
@@ -98,14 +99,16 @@ int main(int argc, char *argv[]) {
         requestHandler(fd, sensorRead);
         json = serialRead(fd);
         std::cout << json << std::endl; 
+        requestHandler(fd, servoWrite);
+        servo.setServoVelocities(fd,holdVector);
         //data = sensorTest(fd, data);
         //requestHandler(fd, servoRead);
         //json = serialRead(fd);  3
         //data = servoTest(fd, data);
-        /*if (data.collisionSide != Sensor::hasContact::none) {
-            hold(fd);
-            break;
-        }*/
+        //if (data.collisionSide != Sensor::hasContact::none) {
+        //    hold(fd);
+        //    break;
+        //}
     }
     std::cout << "DONE" << std::endl;
     return 0;
