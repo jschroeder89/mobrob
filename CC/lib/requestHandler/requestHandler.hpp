@@ -4,6 +4,7 @@
 //Includes
 #include <ArduinoJson.h>
 #include <vector>
+#include <zmq.hpp>
 
 //Defines
 #define sensorRead 1
@@ -24,6 +25,7 @@
 //Prototypes
 //############  Non-Class Function Prototypes  ############
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords);
+void publishData(zmq::socket_t& pub, std::string guiData);
 int openPort(char const *port);
 int getArrayLen(int fd);
 int writeToSerial(int fd, JsonObject& root);
@@ -48,10 +50,10 @@ public:
     ~Servo();
     //Write
     void setServoVelocities(int fd, std::vector<int> &velVector);
-        JsonObject &velocitiesToJson(std::vector<int> &velocities);
+    JsonObject &velocitiesToJson(std::vector<int> &velocities);
     //Read
     std::string requestServoDataJsonString(int fd);
-    void jsonToServoData(std::string json);
+    void parseJsonVelocities(std::string json);
     //Coordinates
     void velocitiesInMeterPerSec();
     std::vector<float> calculateCoords(std::vector<float>& previousCoords, float t);

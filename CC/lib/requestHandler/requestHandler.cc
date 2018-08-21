@@ -210,11 +210,11 @@ std::string Servo::requestServoDataJsonString(int fd) {
     return json;
 }
 
-void Servo::jsonToServoData(std::string json) {
+void Servo::parseJsonVelocities(std::string json) {
     DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.parseObject(json);
-    velocities.push_back(root["velLeft"]);
-    velocities.push_back(root["velRight"]);
+    JsonArray& array = jsonBuffer.parseArray(json);
+    velocities.push_back(array[0]);
+    velocities.push_back(array[1]);
 }
 
 void Servo::velocitiesInMeterPerSec() {
@@ -258,9 +258,11 @@ void Servo::setServoVelocities(int fd, std::vector<int> &velVector){
         std::cout << "No Bytes written..." << std::endl;
     }
 }
+
 //Non Class Functions
 std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>& coords) {
     std::string json;
+
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["message"] = "zmq";
@@ -275,4 +277,11 @@ std::string guiDataToJsonString(std::vector<int>& sensorData, std::vector<float>
     }
     root.printTo(json);
     return json;
+}
+
+void publishData(zmq::socket_t& pub, std::string guiData) {
+    zmq::message_t msg(guiData.size());
+    std::memcpy(msg.data(), guiData.data(), guiData.size());
+    pub.send(msg);
+ 
 }

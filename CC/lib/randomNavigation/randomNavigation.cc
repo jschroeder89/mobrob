@@ -4,7 +4,6 @@
 #include <thread>
 #include <iostream>
 
-
 processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords) {
     processedData data; //Struct Entity
     std::chrono::duration<float> dur; //measured time var
@@ -24,14 +23,13 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
 
     //Data Processing Servo//
     json = servo.requestServoDataJsonString(fd); //request velocities
-    servo.jsonToServoData(json); //parse jsonString
+    //servo.jsonToServoData(json); //parse jsonString
     servo.velocitiesInMeterPerSec(); //calc velocities in m/s
     json.clear(); //clear for reuse
 
     auto end = std::chrono::system_clock::now(); //End Time Measurement
 
     dur = end - start; //calc Time Difference
-    float t = dur.count(); //convert Time Difference to float
 
     std::vector<float> newCoords = servo.calculateCoords(coords, t); //calc Coords
     data.coords = newCoords; //to be returned
@@ -39,7 +37,6 @@ processedData mainProcess(int fd, zmq::socket_t& pub, std::vector<float>& coords
     json = guiDataToJsonString(flatVec, newCoords); //construct gui json string
 
     pub.send(&json, json.size()); //transfer guiData via ZMQ
-    return data; //return processedData struct
 }
 
 void setVelocities(int fd, int velLeft, int velRight) {
@@ -70,7 +67,7 @@ std::vector<int> rndmTurnVelocities() {
 
 float rndmDurations() {
 	srand(static_cast<int> (time(0)));
-    float r = 1 + static_cast<float> (std::rand()) / (static_cast<float> (RAND_MAX/2 - 1));
+    float r = 0.5 + static_cast<float> (std::rand()) / (static_cast<float> (RAND_MAX/1.5 - 1));
 	return r;
 }
 
@@ -105,7 +102,7 @@ processedData move(int fd, zmq::socket_t& pub, int velLeft, int velRight, float 
         coords = data.coords;
         dur = end - start;
     } while(dur.count() < t);
-    return data;
+    return data; 
 }
 
 processedData randomTurn(int fd, zmq::socket_t& pub, std::vector<float>& coords) {

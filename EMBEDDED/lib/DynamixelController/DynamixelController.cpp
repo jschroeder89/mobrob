@@ -140,46 +140,6 @@ void initializeUART() {
     //Serial.println("UART Initialization complete!");
 }
 
-void readFromUSB() {
-    int idx = 0;
-    static boolean inProgress = false;
-    static boolean newData = false;
-    char  c;
-    char buf[bufLen];
-    String s;
-    while (Serial.available() > 0 && newData == false) {
-        c = Serial.read();
-        delay(1);
-        if (inProgress == true) {
-            if (c != '}') {
-                buf[idx] = c;
-                idx++;
-                if (idx >= bufLen) {
-                    idx = bufLen-1;
-                }
-            }
-            else {
-                buf[idx] = '\0';
-                idx = 0;
-                newData = true;
-                inProgress = false;
-            }
-        }
-        else if (c == '{') {
-            inProgress = true;
-            buf[idx] = '{';
-            idx++;
-        }
-
-    }
-    newData = false;
-    s = buf;
-    s.append('}');
-    Serial.println(s);
-    parseJsonString(s);
-}
-
-
 void writeToUART(uint8_t* servoPckt) {
     DynamixelMessage* USBMessage = new DynamixelMessage(servoPckt);
     if (idMap[servoPckt[2]] == 1 || scanMode) {
