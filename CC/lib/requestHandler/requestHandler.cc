@@ -8,6 +8,7 @@
 #include "requestHandler.hpp"
 #include <chrono>
 #include <thread>
+#include <zmq.hpp>
 
 
 int openPort(char const *port) {
@@ -162,23 +163,23 @@ Sensor::hasContact Sensor::detectCollisionSide() {
                 switch (i) {
                     case 0:
                         collisionSide = Sensor::hasContact::frontLeft;
-                        std::cout << "FL" << '\n';
+                        //std::cout << "FL" << '\n';
                         break;
                     case 1:
                         collisionSide = Sensor::hasContact::frontRight;
-                        std::cout << "FR" << '\n';
+                        //std::cout << "FR" << '\n';
                         break;
                     case 2:
                         collisionSide = Sensor::hasContact::left;
-                        std::cout << "L" << '\n';
+                        //std::cout << "L" << '\n';
                         break;
                     case 3:
                         collisionSide = Sensor::hasContact::rear;
-                        std::cout << "B" << '\n';
+                        //std::cout << "B" << '\n';
                         break;
                     case 4:
                         collisionSide = Sensor::hasContact::right;
-                        std::cout << "R" << '\n';
+                        //std::cout << "R" << '\n';
                         break;
                 }
             }
