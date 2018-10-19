@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/randomNavigation.hpp
+zmq.hpp
+-
+requestHandler.hpp
+../include/requestHandler.hpp
+
+../include/requestHandler.hpp
+ArduinoJson.h
+-
+vector
+-
+zmq.hpp
+-
+
+/home/johann/github/mobrob/CC/src/mobrob.cpp
+unistd.h
+-
+requestHandler.hpp
+/home/johann/github/mobrob/CC/src/requestHandler.hpp
+randomNavigation.hpp
+/home/johann/github/mobrob/CC/src/randomNavigation.hpp
+iostream
+-
+zmq.hpp
+-
+chrono
+-
+thread
+-
+
