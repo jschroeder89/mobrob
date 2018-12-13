@@ -2,7 +2,7 @@
 
 void setup() {
     I2C i2c;
-    Serial.begin(9600);
+    Serial.begin(115200);
     pinMode(13, OUTPUT);
     digitalWrite(13, HIGH);
     initializeUART();

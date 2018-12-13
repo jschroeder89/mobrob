@@ -25,8 +25,15 @@ public:
     ~Sensor();
     std::string requestSensorDataJsonString(int fd);
     std::vector<int> jsonToSensorData(std::string json);
-    enum class hasContact {frontLeft, frontRight, right, rear, left, none};
-    hasContact detectCollisionSide();
+    enum class collision_detected {
+        frontLeft,
+        frontRight,
+        right,
+        rear,
+        left,
+        none
+    };
+    collision_detected detectCollisionSide();
 private:
     std::vector<std::vector<int> > sensorData;
 };

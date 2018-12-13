@@ -7,7 +7,7 @@
 //Prototypes
 struct processedData {
     std::vector<int> sensorVec;
-    Sensor::hasContact collisionSide;
+    Sensor::collision_detected collisionSide;
     std::vector<float> coords;
 };
 

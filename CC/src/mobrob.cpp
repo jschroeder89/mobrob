@@ -15,6 +15,7 @@ processedData servoTest(int fd, processedData& data);
 
 void randomWalk(int fd, zmq::socket_t &pub, std::vector<float>& prevCoords) {
     Servo s;
+    Sensor sens;
     processedData data;
     data.coords = prevCoords;
     std::vector<int> initVel{0, 0};
@@ -25,7 +26,7 @@ void randomWalk(int fd, zmq::socket_t &pub, std::vector<float>& prevCoords) {
         //data = mainProcess(fd, pub, data.coords);
         std::this_thread::sleep_for(std::chrono::milliseconds(35));
     }
-    if (data.collisionSide != Sensor::hasContact::none) {
+    if (data.collisionSide != Sensor::collision_detected::none) {
         std::cout << "YEP" << std::endl;
         data = hold(fd, pub, data.coords);
         data = wait(fd, pub, 1.0, data.coords);
@@ -66,12 +67,12 @@ processedData sensorTest(int fd, processedData& data) {
     return data;
 }
 
-processedData servoTest(int fd, processedData& data, std::vector<float> &prevCoords, float t) {
+processedData servoTest(int fd, processedData& data) {
     Servo servo;
     std::string json = servo.requestServoDataJsonString(fd); //request velocities
     servo.parseJsonVelocities(json); //parse jsonString
     servo.velocitiesInMeterPerSec(); //calc velocities in m/s
-    data.coords = servo.calculateCoords(prevCoords, t);
+    //data.coords = servo.calculateCoords(prevCoords, t);
     std::cout << json << std::endl;
     return data;
 }
@@ -123,15 +124,15 @@ void naivRandomWalk(int fd) {
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
 
-    d.collisionSide = Sensor::hasContact::none; 
+    d.collisionSide = Sensor::collision_detected::none; 
     std::vector <int> initVel{30,30};
     initialVel(fd, initVel);
     while(true){
 
-        d = servoTest(fd, d, coords, t);
+        //d = servoTest(fd, d, coords, t);
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         d = sensorTest(fd, d);
-        if (d.collisionSide != Sensor::hasContact::none) {
+        if (d.collisionSide != Sensor::collision_detected::none) {
             servoHold(fd);
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             moveBack(fd);
@@ -156,25 +157,30 @@ void guiTest(int fd, std::vector<float> coords, zmq::socket_t& pub) {
 }
 
 int main(int argc, char *argv[]) {
-    std::vector<float> coords{0,0,0};
     zmq::context_t context (1);
     zmq::socket_t pub(context, ZMQ_PUB);
     pub.bind("tcp://*:5555");
     int fd = openPort("/dev/ttyACM0");
+    
+    //std::vector<float> coords{0,0,0};
+    std::vector<int> forward_slow{2, 2};
+    std::vector<int> hold{0, 0};
+    Sensor sensor;
+    Servo servo;
     processedData data;
-    //randomWalk(fd, pub, coords);
-    //naivRandomWalk(fd);
-    //guiTest(fd, coords, pub);
-    std::cout << "HELLO WORLD" << std::endl;
-    /* Servo s;
-    std::vector<int> hold{5,5};
-    requestHandler(fd, servoWrite);
-    s.setServoVelocities(fd, hold);
+    //requestHandler(fd, servoWrite);
+    //servo.setServoVelocities(fd, forward_slow);
+    //requestHandler(fd, sensorRead);
+    while(true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        data = sensorTest(fd, data);
+        servoTest(fd, data);
+        //std::string json = servo.requestServoDataJsonString(fd); //request velocities
+        //std::cout << "Vel: " << json << std::endl;
+        if(data.collisionSide != Sensor::collision_detected::none) break;
+    }
+    //servoHold(fd);
 
-    while(true){
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        servoTest(fd, data, coords, 1);
-    } */
     
     return 0;
 }

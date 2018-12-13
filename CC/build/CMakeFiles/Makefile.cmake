@@ -8,9 +8,9 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "../CMakeLists.txt"
-  "CMakeFiles/3.12.3/CMakeCCompiler.cmake"
-  "CMakeFiles/3.12.3/CMakeCXXCompiler.cmake"
-  "CMakeFiles/3.12.3/CMakeSystem.cmake"
+  "CMakeFiles/3.12.4/CMakeCCompiler.cmake"
+  "CMakeFiles/3.12.4/CMakeCXXCompiler.cmake"
+  "CMakeFiles/3.12.4/CMakeSystem.cmake"
   "/usr/share/cmake-3.12/Modules/CMakeCInformation.cmake"
   "/usr/share/cmake-3.12/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake-3.12/Modules/CMakeCommonLanguageInclude.cmake"

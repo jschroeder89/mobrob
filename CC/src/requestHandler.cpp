@@ -4,6 +4,8 @@
 #include <iostream>
 #include <math.h>
 #include "requestHandler.hpp"
+#include <chrono>
+#include <thread>
 
 //############  Non-Class Function Prototypes  ############
 void publishData(zmq::socket_t& pub, std::string guiData);
@@ -15,7 +17,7 @@ std::string serialRead(int fd);
 #define jsonBufLenLong 1048
 #define jsonBufLenShort 128
 #define bufLen 256
-#define collisionThreshold 2800
+#define collisionThreshold 2000
 #define axisLength 0.15
 #define revolutionsPerMinute 0.916
 #define wheelDiameter 0.052
@@ -30,7 +32,7 @@ int openPort(char const *port) {
     }
 
     tcgetattr(fd, &oldtio);
-    newtio.c_cflag = 9600 | CRTSCTS | CLOCAL;
+    newtio.c_cflag = 115200 | CRTSCTS | CLOCAL;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
@@ -43,29 +45,29 @@ int openPort(char const *port) {
 
 int getArrayLen(int fd) {
     int nbytes = 0, n = 0, bufferLen = 8;
-    char buf[bufferLen]; 
+    char buf[bufferLen] = {0}; 
     std::string json;
     while(nbytes <= bufferLen) {
         n = read(fd, buf+nbytes, 1);
-        /* std::cout << buf << std::endl;
-        std::cout << "HERE" << std::endl; */
+        std::cout << "buf[n]: " << buf[nbytes] << std::endl;
         if (buf[nbytes] == ']') {
             buf[nbytes+1] = '\0';
             json = buf;
             break;
         }
         nbytes++;
-        
     }
+    //std::cout << "buf: " << buf << std::endl;
     DynamicJsonBuffer jsonBuffer;
     JsonArray& array = jsonBuffer.parse(json);
     int arrayLen = array[0];
+    std::cout << "array: " << array[0] << std::endl;
     return arrayLen;
 }
 
 std::string serialRead(int fd) {
     int n = 0, nbytes = 0, bufferLen = getArrayLen(fd);
-    char buf[bufferLen];
+    char buf[bufferLen] = {0};
     std::string json;
     do {
         n = read(fd, buf+nbytes, bufferLen-nbytes);
@@ -73,11 +75,13 @@ std::string serialRead(int fd) {
         if (buf[nbytes-1] == ']') {
             buf[nbytes] = '\0';
             json = buf;
+            std::cout << buf << std::endl;
+            std::cout << sizeof buf << std::endl;
             break;
         }
+    std::cout << bufferLen << std::endl;
+    //break;
     } while(nbytes <= bufferLen);
-    /* std::cout << json.length() << std::endl;
-    std::cout << bufferLen << std::endl; */
     return json;
 }
 
@@ -164,30 +168,30 @@ std::vector<int> Sensor::jsonToSensorData(std::string json) {
     return flatVec;
 }
 
-Sensor::hasContact Sensor::detectCollisionSide() {
-    Sensor::hasContact collisionSide = Sensor::hasContact::none;
+Sensor::collision_detected Sensor::detectCollisionSide() {
+    collision_detected collisionSide = collision_detected::none;
     for (size_t i = 0; i < 5; i++) {
         for (size_t j = 0; j < 8; j++) {
             if (sensorData.at(i).at(j) > collisionThreshold) {
                 switch (i) {
                     case 0:
-                        collisionSide = Sensor::hasContact::frontLeft;
+                        collisionSide = collision_detected::frontLeft;
                         //std::cout << "FL" << '\n';
                         break;
                     case 1:
-                        collisionSide = Sensor::hasContact::frontRight;
+                        collisionSide = collision_detected::frontRight;
                         //std::cout << "FR" << '\n';
                         break;
                     case 2:
-                        collisionSide = Sensor::hasContact::left;
+                        collisionSide = collision_detected::left;
                         //std::cout << "L" << '\n';
                         break;
                     case 3:
-                        collisionSide = Sensor::hasContact::rear;
+                        collisionSide = collision_detected::rear;
                         //std::cout << "B" << '\n';
                         break;
                     case 4:
-                        collisionSide = Sensor::hasContact::right;
+                        collisionSide = collision_detected::right;
                         //std::cout << "R" << '\n';
                         break;
                 }
@@ -255,18 +259,24 @@ std::vector<float> Servo::calculateCoords(std::vector<float>& previousCoords, fl
 }
 
 void Servo::setServoVelocities(int fd, std::vector<int> &velVector){
+	requestHandler(fd, servoWrite);
     int n = 0;
     char buf[80];
+    char newline[1] =  {'\n'};
     DynamicJsonBuffer jsonBuffer;
     JsonArray &velArray = jsonBuffer.createArray();
     velArray.add(velVector[0]);
     velArray.add(velVector[1]);
     int len = velArray.measureLength();
     velArray.printTo(buf);
+    //std::cout << buf << std::endl;
     n = write(fd, buf, len);
     if (n <= 0) {
         std::cout << "No Bytes written..." << std::endl;
     }
+    write(fd, newline, 1); //improvised input buffer flush
+    //std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    //tcflush(fd, TCIOFLUSH);
 }
 
 //Non Class Functions
