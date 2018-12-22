@@ -297,7 +297,6 @@ void requestHandler() {
     while(Serial.available() > 0) {
         //Serial.readBytes(requestByte, 1);
         requestByte = Serial.read();
-        Serial.println(requestByte);
         switch(requestByte) {
             case sensorReadByte:
                 readSensorData();
